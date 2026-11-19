@@ -1,0 +1,103 @@
+\section{Ordinary likelihood under adaptive tests}\label{app:likelihood}
+We prove Lemma~\ref{lem:mle}. Write $p_i,q_i$ for the conditional joint masses of the recorded episode under truth and a fixed candidate, given the past $\mathcal F_{i-1}$. The controller and the split convention are fixed at this point. Let $a_i(x)=\Hell^2(p_i(\cdot\mid x),q_i(\cdot\mid x))$. On the support of the truth, integrating first over $Z_i$ gives
+\begin{align*}
+ &\E_\st\!\left[e^{a_i(X_i)}
+ \sqrt{q_i(X_i,Z_i)/p_i(X_i,Z_i)}\mid\mathcal F_{i-1}\right]\\
+ &\quad=\sum_x\sqrt{p_{i,X}(x)q_{i,X}(x)}
+       \,e^{a_i(x)}(1-a_i(x))\le1 .
+\end{align*}
+Indeed $e^t(1-t)\le1$ on $[0,1]$ and the marginal affinity is at most one. The successive products form a nonnegative supermartingale of initial value one. Ville's inequality and a union bound over $\Theta$ bound its logarithm by $\log(3|\Theta|/\delta)$ for every candidate at every sample size, except on an event of probability $\delta/3$. At a refit, the sum of the log likelihood ratios of the selected model is at least $-\xi$. Substitution gives $\sum_{i\le n}a_i(X_i)\le\beta$. When $X_i$ is empty its summand is the squared Hellinger distance of the entire experiment induced by the frozen controller. This explains how complete-episode MLE supplies the two different error budgets used in the proof.
+
+\section{The two product expansions}\label{app:product}
+Fix a physical trajectory and abbreviate the realized matrices by $T_h=B_h^\st(o_h,a_h)$ and $S_h=\wh B_h(o_h,a_h)$. Write $T_{j:i}=T_j\cdots T_i$, with empty products equal to the identity, and put $q=q_1^\st$, $\hat q=\wh q_1$. The scalar difference in trajectory observation probabilities under the fixed actions has two expansions:
+\begin{align*}
+ T_{H:1}q-S_{H:1}\hat q
+ &=T_{H:1}(q-\hat q)\\
+ &\quad+\sum_{h=1}^H T_{H:h+1}(T_h-S_h)S_{h-1:1}\hat q\\
+ &=S_{H:1}(q-\hat q)\\
+ &\quad+\sum_{h=1}^H S_{H:h+1}(T_h-S_h)T_{h-1:1}q .
+\end{align*}
+Each sum is obtained by subtracting adjacent products whose dividing point moves one step. In the first expression, $S_{h-1:1}\hat q$ is the fitted unnormalized prefix state; in the second, $T_{h-1:1}q$ is its true counterpart. Multiplying by the action weights of a fixed policy and summing over physical trajectories turns the prefix factors into the expectations in \eqref{eq:telescope} and \eqref{eq:reverse}. At a given $(x,o,a)$ the absolute sum over the future is at most the policy norm of its suffix array. The factor $1/2$ in $F$ and $G$ converts the absolute sum into total variation.
+
+For a logged controller, fix a physical trajectory $\tau$ and a compatible sequence of internal labels $\lambda$. Its joint mass factors into the environment's observation probability along $\tau$ and the controller's product $k_\nu(\tau,\lambda)$ of action and label probabilities. The kernel is identical in both models once $\tau,\lambda$ are fixed. Conditional on $\tau$, normalizing $k_\nu$ over compatible labels therefore gives a common label kernel. In particular, logging preserves the divergence of this complete physical experiment, while displaying the mixture label lets one write its divergence as the weighted sum of component divergences. At a cut the new kernel retains all realized choices and replaces future choices by its own test decisions; the same factorization applies.
+
+\section{From test laws to feature errors}\label{app:mass}
+Consider nonnegative test arrays $p,q$ that arise from core probabilities with total scale $m_p,m_q$. Within any group, each array sums to at most its scale. On maximal tests, the policy-weighted mass is likewise bounded by that scale. Factoring $p_j-q_j=(\sqrt{p_j}-\sqrt{q_j})(\sqrt{p_j}+\sqrt{q_j})$ and applying Cauchy--Schwarz to each group gives
+\[
+ \fused{p-q}^2
+ \le 2(m_p+m_q)\sum_j(\sqrt{p_j}-\sqrt{q_j})^2 .
+\]
+For $N_{12}$ sum the squared group bounds. For $N_\Pi$ apply weighted Cauchy--Schwarz to each policy on the maximal leaves, and use $\pi(j)\le1$ in the squared-root sum. This also gives the bound when the core lists contain both a test and one of its extensions.
+
+For a uniformly selected core string there are $U_h$ groups. The total squared-root sum of the listed entries is at most $2U_hc_h$: include the common string label in the experiment and retain the disjoint listed observation outcomes in each group. With scales one, this gives the first inequality of \eqref{eq:drift}. In the one-step experiment the scale for $z_{oa}$ is $p(o)$ or $q(o)$. For $s_{oa}$ denoting its sum of squared-root discrepancies,
+\begin{align*}
+ \Big(\sum_o\max_a\fused{\Delta z_{oa}}\Big)^2
+ &\le 2\Big(\sum_o(p(o)+q(o))\Big)\sum_o\max_a s_{oa}\\
+ &\le 4\sum_{o,a}s_{oa}\le8AU_{h+1}d_h .
+\end{align*}
+The last inequality uses the uniform action and subsequent uniform string label. This argument charges a single action factor. Applied to the initial uniform-core data it also bounds the squared error of the initial vector after a stable continuation.
+
+\section{Batch sizes, stopping and oracle cost}\label{app:budget}
+Recall $\tau_0=\eps/8$, $\eta=\tau_0/(24LW)$, $R_a^2=\max\{2\cE,L^2W^2\}$ and $\Gamma=24YL$. For a sufficiently large numerical constant $c$ use
+\begin{equation}
+ m_k=\left\lceil \frac{cR_a^2}{\tau_0^2}
+        \log\frac{cL(k+1)^2}{\delta}\right\rceil,\qquad
+ n_N=\left\lceil128\Gamma\beta/\eta^2\right\rceil .
+ \label{eq:batches}
+\end{equation}
+Condition on the past at a frozen round. The independent clipped leverages in the training batch are in $[0,1]$. Under the first alternative their total mean is at least $m_k\tau_0^2/(4R_a^2)$. A multiplicative Chernoff bound makes their realized sum at least one except with probability $\delta/[c'(k+1)^2]$ for a suitable $c'$. This is a conditional bound for each past that satisfies the alternative. It can therefore be intersected with the simultaneous calibration event afterwards. Hoeffding's inequality gives the simulation accuracy using $O(L^2W^2\eps^{-2}\log(cL(k+1)^2/\delta))$ fitted-model episodes. Choose the constants to spend a total of at most $2\delta/3$ on simulation and batch tails.
+
+The initial matrices are multiples of the identity. At each stage the accumulated empirical trace above the ridge is at most $Km_Kr$ and the added population trace at most $Kr$. Monotonicity, the eigenvalue bound by trace, and $r_h\le r$ give the right side of \eqref{eq:cap}. Compute $K_{\max}$ by doubling an integer until \eqref{eq:cap} first fails at that integer. Since $m_K$ grows as $\log(K+1)$, this takes $K_{\max}=\softO(rL)$ as the cap. For example the right side divided by $rL$ is bounded by a constant times $\log(C(K+1)^3)$ for $C$ polynomial in the scalar parameters and their reciprocals where applicable. Doubling past a large constant times $rL\log(C(rL+1)^3)$ then suffices. Return failure after $K_{\max}$ completed nonstopping rounds. On the joint event this contradicts \eqref{eq:cap}, and a stopping round must have occurred earlier.
+
+Every nonstopping round uses $Lm_k$ training episodes and $n_N$ nested episodes. Substitution gives
+\begin{align*}
+ Lm_k&=\softO\big((\beta YL^2+L^3W^2)/\eps^2\big),\\
+ n_N&=O(\beta YL^3W^2/\eps^2).
+\end{align*}
+The second term controls the sum up to logarithms. Multiplying by the cap and using $YW^2=\Lambda_B^4 AU^2$ proves the episode bound. Each fit is followed by one bonus-planning call, with one extra call for final reward planning. The extra $(LW)^2$ in the nested budget comes from the TV resolution $\eta$ in \eqref{eq:transfer}.
+
+\section{Numerical evaluation of the support}\label{app:numeric}
+A stage query returns a feasible coefficient, the conic decomposition from Lemma~\ref{lem:score}, and a certified lower value within $\zeta=\eps/(256L)$ of the exact support. Use a deterministic solver and tie convention throughout a round. If a certified lower objective is negative, use the zero solution. This construction gives $0\le\widetilde b_k\le b_k\le\widetilde b_k+L\zeta$; the scalar root has the same tolerance. A planner accepting rewards in $[0,1]$ receives $\widetilde b_k/(LW)$ with the correspondingly rescaled tolerance.
+
+For precision bounds let $d$ be the lifted dimension and $n$ the number of training rows at the stage. Each coefficient vector has Euclidean norm at most $R_c=\Lambda_B\sqrt d$, since $\fused{e_j}=1$ on a coordinate vector. Every lifted row has norm at most $M=(A+1)U$ by the group mass bound. Since $\fused{v}\ge\|v\|_2$, the coefficient constraints contain a Euclidean ball of radius $\Lambda_B/(4\sqrt A)$. After the historical constraint, an inscribed radius is
+\[
+ \min\!\left\{\frac{\Lambda_B}{4\sqrt A},
+   \frac{\sqrt S}{2\sqrt{\max(1,n)}\,M}\right\}.
+\]
+In the extended formulation choose zero signed coordinates, split each block's positive cost allowance between group and flow with slack, take small positive group radii, and split each action flow uniformly. In the affine space of the decomposition, root and flow equalities, this gives strictly feasible inequalities. The smallest positive leaf weight scales as $A^{-H}$ times an input-dependent block budget, with logarithmic precision cost $O(H\log A)$ plus input bit lengths. Standard weak optimization for second-order cones yields feasible interior approximations at polynomial bit cost; shrinking toward this interior point absorbs solver residuals. A fixed completion supplies the action probabilities on branches of zero weight.
+
+For approximate model access let $e$ bound the Euclidean error of each reported feature row and query. Replace the radius $\sqrt S$ by $\sqrt S-\sqrt n R_c e$ on reported rows. The resulting coefficients are feasible on exact rows by the triangle inequality. Conversely an exactly feasible coefficient can be shrunk toward zero by a relative amount $O(\sqrt n R_c e/\sqrt S)$ to meet the inward constraint. The objective loss is bounded by this amount times $W$, plus $O(R_c e)$ for query evaluation. Taking
+\[
+ e\le c\,\zeta\min\!\left\{1/R_c,\,
+ \frac{\sqrt S}{\sqrt{\max(1,n)}\,R_cW}\right\}
+\]
+for a sufficiently small universal $c$ leaves room for solver tolerance and certified downward rounding. The required bits grow logarithmically in $1/e$. Reencoding prefixes, evaluating rewards and simulating policies thus use polynomial additional computation.
+
+\section{Discrete classes with upper brackets}\label{app:bracket}
+Suppose a deterministic episode cap $T$ is available and each designated prefix has at most $C_{\rm pre}$ possible values, including recorded prefix labels. Set $\kappa=(4TC_{\rm pre})^{-1}$ and $s=\kappa/(4T)$. An upper bracket $b$ assigns each allowed controller $\nu$ a nonnegative array $b^\nu$. A bracket covers a candidate $\theta$ if for every such $\nu$, $b^\nu\ge p_\theta^\nu$ pointwise and $\sum_\omega(b^\nu-p_\theta^\nu)(\omega)\le s$. Let $M_s$ brackets cover the class, each covering at least one candidate.
+
+\begin{corollary}
+Theorem~\ref{thm:main} holds with $\beta=3\log(9M_s/\delta)+2\xi+2$ whenever $T$ dominates the deterministic budget produced by this choice.
+\end{corollary}
+\begin{proof}
+It suffices to recover Lemma~\ref{lem:mle}. Write $\ell=\log(9M_s/\delta)$. For each bracket, normalize $b_i=b^{\nu_i}$ to $\bar q_i=b_i/\sum b_i$ and apply the conditional supermartingale to $\bar q_i$. For the bracket covering the fit, $\sum_{i\le n}\log(\bar q_i/p_i)\ge-\xi-Ts$ on the observed episodes, since $1\le\sum b_i\le1+s$. Thus its accumulated conditional squared Hellinger risk is at most $\ell+\xi/2+Ts/2$ uniformly over refits.
+
+For the same bracket put $I_i=\mathbf1\{b_{i,X}(X_i)\le2\kappa\}$. The true conditional expectation of $(b_i/p_i)e^{I_i}$ is at most $c_b=1+s+2(e-1)\kappa C_{\rm pre}$, by summing bracket mass on the small prefixes. Apply Ville's inequality to the products divided by $c_b$ per step and union bound over brackets. Since $\sum\log(b_i/p_i)\ge-\xi$ for the fitted bracket, $\sum I_i\le\ell+\xi+T\log c_b\le\ell+\xi+1$. Every fitted prefix of probability below $\kappa$ is counted, since bracket marginal excess is at most $s$. At the remaining prefixes, writing the bracket as the fitted mass plus its nonnegative excess gives conditional TV between the two of at most $s/\kappa$. Squared Hellinger distance is bounded by TV. The squared triangle inequality bounds total conditional risk by twice the bracket risk, plus $2Ts/\kappa$ and the small-prefix count. This gives $3\ell+2\xi+2$. The two simultaneous events cost at most $2\delta/9$. Substitution in the finite-class argument proves the claim.
+\end{proof}
+
+\section{Choosing the coefficient geometry}
+A class can have both a fused stability parameter $\Lambda_B$ and an $\ell_1$ continuation bound $\pn{\B^\theta_{H:h}v}\le\Lambda_1\|v\|_1$. The latter gives a second realization of the same local witnesses. At a prefix constrain $\|u\|_\infty\le\Lambda_1/2$ and $\sum_a\|w_{oa}\|_\infty\le\Lambda_1/2$ for every $o$. Each coefficient block $c$ can be measured by drawing a uniform action string and returning $U_h c_j$ on its listed outcome $j$, zero on exit. This score has range bounded in magnitude by $U_h\|c\|_\infty$. The transition controller uses action masses proportional to these bounds as in \sect{sec:diagnostic}. The stage score bound becomes $W_1=\Lambda_1U$.
+
+The certificate budget $S$ follows from the same fused calibration of $F_h$, because stability in the two geometries applies to the same model operators. For a feasible coefficient in the new geometry, the squared historical feature drift can be larger. Using $\|v\|_1\le\sqrt U\fused v$ in \eqref{eq:drift} bounds this drift by $O(AW_1^2 a_{\wh\theta,i})$. The true energy allowance therefore becomes $O(\beta(LY+AW_1^2))$. The nested local-error budget remains $\Gamma=O(YL)$, while the transfer threshold scales as $\eps/(LW_1)$. The resulting training cost is absorbed by the nested batch since $Y\ge A$ and $W_1\ge1$ (one may take $\Lambda_1\ge1$). Choosing the geometry with the smaller known score range before data collection yields
+\[
+ T=\softO\!\left(\frac{r\Lambda_B^2 AU H^4\beta}{\eps^2}
+       \min\{\Lambda_1^2 U^2,\Lambda_B^2 U\}\right).
+\]
+Each choice gives the same $\softO(rH)$ bound on calls to each oracle.
+
+\section{A capped trajectory certificate}
+The stagewise construction yields a bounded version of \eqref{eq:intro} along each policy. If $b_0,b_h$ dominate the errors of \eqref{eq:telescope} pointwise and $B=b_0+\sum_h b_h(\tau_{h-1})$, then
+\[
+ \TV(P_\st^\pi,P_{\wh\theta}^\pi)\le3\E_{\wh\theta,\pi}\min(B,1).
+\]
+For $b_0>1$ the claim follows directly. Otherwise let $T_c$ be the first stage at which the sum exceeds one, taking $H+1$ when it never does. On crossing trajectories the integral of the positive part of fitted minus true density is at most the fitted crossing probability. On the complement, expand the absolute density difference as in \eqref{eq:telescope}. At stage $h$ relax the restriction on the full path to the prefix event $h<T_c$, then sum out its future. The resulting integral is at most $2\E_{\wh\theta,\pi}[b_0+\sum_{h<T_c} b_h]$. Both the crossing indicator and this pre-crossing sum inside the expectation are at most $\min(B,1)$, giving the claim.

@@ -1,0 +1,106 @@
+\section{Certifying trajectory error}\label{sec:certificate}
+Fix a round and abbreviate $\wh\theta_k$ by a hat. We first identify a local error whose expectation is taken under the fitted model. The direction of this expansion determines which features the planner needs. For a continuation operator at $H+1$, use the identity. Define
+\begin{align}
+ F_0 &= \tfrac12\pn{\B^\st_{H:1}(q_1^\st-\wh q_1)},\nonumber\\
+ F_h(q)&=\tfrac12\max_\alpha\sum_{o,a}\alpha(a\mid o)
+ \pn{\B^\st_{H:h+1}(B_h^\st(o,a)-\wh B_h(o,a))q}.
+ \label{eq:F}
+\end{align}
+Here $\alpha$ is an action rule following the current observation. Each suffix norm can choose its own continuation, as a history policy can branch after $(o,a)$.
+
+\paragraph{The direction of expansion.}
+Subtract the two products for a trajectory by replacing one factor at a time. The summand for stage $h$ has true operators to its left (the future), the difference $B_h^\st-\wh B_h$ in the middle, and fitted operators to its right (the prefix). Acting on the fitted initial vector, the prefix product gives its fitted observation probability times $\wh q_h(x)$. Multiply by the policy's action probabilities and sum absolute errors over trajectories. Summation over the prefix now gives the fitted expectation. Thus
+\begin{equation}
+ \TV(P_\st^\pi,P_{\wh\theta}^\pi)
+ \le F_0+\sum_{h=1}^H\E_{\wh\theta,\pi} F_h(\wh q_h(x)).
+ \label{eq:telescope}
+\end{equation}
+Appendix~\ref{app:product} gives the product identity, including the initial-state term. The future operators in $F_h$ are unknown. We next construct an observable upper bound on this seminorm.
+
+\paragraph{The features seen by an error direction.}
+For either model define
+\[
+ z_h^\theta(o,a;x)=B_h^\theta(o,a)q_h^\theta(x),\qquad
+ \phi_h^\theta(x)=\big(q_h^\theta(x),(z_h^\theta(o,a;x))_{o,a}\big).
+\]
+Write $g_v(\phi)=u^\top q+\sum_{o,a}w_{oa}^\top z_{oa}$ for $v=(u,w)$. Use the stage-dependent coefficient set
+\begin{equation}
+ \K_h=\left\{(u,w):
+ \dual u\le\tfrac{\Lambda_B}{2},\
+ \sum_a\dual{w_{oa}}\le\tfrac{\Lambda_B}{2}\;\;(\forall o)\right\}.
+ \label{eq:geometry}
+\end{equation}
+The norms on $u$ and $w$ correspond to stages $h$ and $h+1$. Every such functional has magnitude at most $W$ on valid lifted states by \eqref{eq:update}. Its true lift is a fixed linear map of $q_h^\st$, a fact we will use to count updates.
+
+\subsection{A witness at a new history must be feasible on old histories}
+The seminorm $F_h$ depends on both models. The learner can still put its supporting directions inside a known set. We spell out this change of variables because it is what makes optimization in a single fit possible.
+
+Fix the query and a maximizing action rule in \eqref{eq:F}. For each $(o,a)$ choose a suffix policy and signs realizing the absolute sum in that suffix norm. Let $d_{oa}$ be the corresponding signed row of the true continuation map, summed with its policy weights. Thus $|d_{oa}^\top y|\le\pn{\B^\st_{H:h+1}y}$ for every signed $y$. Write
+\begin{align*}
+ u^\top &=\tfrac12\sum_{o,a}\alpha(a\mid o)d_{oa}^\top B_h^\star(o,a),\\
+ w_{oa}^\top &=-\tfrac12\alpha(a\mid o)d_{oa}^\top .
+\end{align*}
+The first row is a single signed full continuation: at observation $o$ pick $a$ with probability $\alpha(a\mid o)$, and continue with the policy already chosen for that branch. Even though the number of observations can be large, it follows that $|u^\top y|\le\pn{\B^\st_{H:h}y}/2$. The second row has dual norm at most $\alpha(a\mid o)\Lambda_B/2$. Summing over actions at fixed $o$ proves both constraints in \eqref{eq:geometry}.
+
+At the query this choice gives $g_v(\wh\phi_h(x))=F_h(\wh q_h(x))$. At another input the chosen policy and signs are still available to the maximization defining $F_h$. Reversing all signs also remains feasible. Hence
+\begin{equation}
+ |g_v(\wh\phi_h(x'))|\le F_h(\wh q_h(x'))\quad\text{for every }x'.
+ \label{eq:global}
+\end{equation}
+Equality at the query and domination on the training set do different work. Equality makes the objective large enough to certify the error of interest. Domination implies that the same witness passes a constraint on its accumulated historical energy. The unknown continuation coefficients can now be replaced by the whole structured ball, provided we can estimate how large that energy may be.
+
+\subsection{What the likelihood of a complete episode controls}
+A training episode reaches a random prefix and only then chooses the experiment that produces its remaining data. At its observed prefix $X$ the desired error is a discrepancy between suffix laws. The oracle, however, maximizes the joint log likelihood of $(X,Z)$. An observed suffix may favor a candidate that assigned little probability to its prefix, or conversely. The following inequality accounts for both factors in the same likelihood ratio.
+
+\begin{lemma}[Conditional likelihood calibration]\label{lem:mle}
+In each episode select a predictable rule for splitting its recorded data into a prefix $X_i$ and a suffix $Z_i$. For a candidate $\theta$, let $a_{\theta,i}(x)=\Hell^2(P_{\st,i}(Z_i\mid x),P_{\theta,i}(Z_i\mid x))$, where $\Hell^2(P,Q)=1-\sum_z\sqrt{P(z)Q(z)}$. With probability at least $1-\delta/3$, at every refit on $n$ episodes,
+\[
+ \sum_{i\le n} a_{\wh\theta,i}(X_i)\le\beta .
+\]
+\end{lemma}
+The proof in Appendix~\ref{app:likelihood} applies to the ordinary joint likelihood of every complete episode. In training episodes the designated prefix ends immediately before the test coin. In initial-core and nested episodes it is empty. The first choice controls conditional error at the histories actually observed. The second controls a population distance between complete experimental laws.
+
+For a fixed candidate write $p,q$ for the true and candidate joint laws and $a(x)$ for conditional squared Hellinger error. Integrating a square-root likelihood ratio over the suffix yields
+\[
+ \sum_z p(x,z)\sqrt{\frac{q(x,z)}{p(x,z)}}
+   =\sqrt{p_X(x)q_X(x)}\,\bigl(1-a(x)\bigr).
+\]
+Multiply by $e^{a(x)}$. Since $e^t(1-t)\le1$ on $[0,1]$, summing over $x$ gives at most one, even as the experiment changes with past data. Iterating this calculation and applying the MLE likelihood inequality proves the lemma; Appendix~\ref{app:likelihood} gives the time-uniform argument. When the split is at a training prefix the random variable $a(X)$ appears inside the sum. When the prefix is empty it takes the same deterministic value for every repetition of a frozen design and a fixed candidate. Uniformity over candidates is what later permits substituting the current fit into the errors of old experiments.
+
+\paragraph{Local calibration.}
+At a training prefix let $c_h(x)$ and $d_h(x)$ be the squared Hellinger distances between the two models for the following two test records. The current-core record contains the fresh uniform string and its observations. The one-step-plus-core record additionally includes the current observation and uniform action preceding the string. Each record is a projection of the complete logged suffix. Marginalization and the logged fair coin give $c_h+d_h\le2a_{\wh\theta,i}(x)$. With $\Delta q=\wh q-q^\st$ and $\Delta z=\wh z-z^\st$, the test-mass inequalities of Appendix~\ref{app:mass} give
+\begin{align}
+ \fused{\Delta q}^2&\le 8U c_h,\nonumber\\[-1pt]
+ \Big(\sum_o\max_a\fused{\Delta z_{oa}}\Big)^2&\le 8AU d_h.
+ \label{eq:drift}
+\end{align}
+To apply these bounds, insert $B_h^\st q_h^\st$ between $B_h^\st\wh q_h$ and $\wh B_h\wh q_h$. The first difference propagates $\Delta q$ through a full true continuation. The other is a difference of one-step joint predictions. By stability,
+\[
+ F_h(\wh q_h)
+ \le \tfrac{\Lambda_B}{2}\Big(\fused{\Delta q}+
+             \sum_o\max_a\fused{\Delta z_{oa}}\Big).
+\]
+The same right-hand side bounds $|g_v(\wh\phi_h-\phi_h^\st)|$ for every $v\in\K_h$. Consequently each squared quantity is at most $8Y a_{\wh\theta,i}(x)$. The initial-core experiment similarly gives $F_0^2\le2Y a_{\wh\theta,i}(\varnothing)$ and $F_0\le W$.
+
+\subsection{The program given to the planner}
+There are now three quantities at a prefix. The local operator error $F_h$ is defined using the truth. Its upper bound in terms of test-law discrepancies is also unknown, but Lemma~\ref{lem:mle} bounds the \emph{sum} of those discrepancies on past training data. The lifted rows and the set $\K_h$ are evaluable in the fit. The algorithm uses the known budget on the former quantities to constrain only the latter ones.
+Set $S=8Y\beta$. At each refit, evaluate the histories in $\I_h$ using the current $\wh\theta$ and solve
+\begin{align}
+ b_h(x)&=\max_{v\in\K_h}g_v(\wh\phi_h(x)) \nonumber\\[-2pt]
+ &\quad\text{subject to }\
+ \sum_{x_i\in\I_h}g_v(\wh\phi_h(x_i))^2\le S .
+ \label{eq:program}
+\end{align}
+The buffers are multisets. The initial scalar support is $b_0=\max\{s:|s|\le W,\ N_0s^2\le S\}$. Define the exact reward $b=b_0+\sum_{h=1}^H b_h(\tau_{h-1})$. Each stage selects its coefficient with only the prefix available at that stage.
+
+\begin{proposition}[Stopping certificate]\label{prop:cert}
+The reward satisfies $0\le b\le LW$. On the event of Lemma~\ref{lem:mle}, it satisfies \eqref{eq:intro} for every policy.
+\end{proposition}
+\begin{proof}
+Summing local calibration over the disjoint training episodes gives $N_0F_0^2+\sum_{h,i}F_h(\wh q_h(x_i))^2\le S$. At any new prefix, \eqref{eq:global} puts its supporting coefficient in the feasible set of \eqref{eq:program}. Hence $F_h(\wh q_h(x))\le b_h(x)$ and $F_0\le b_0$. Apply \eqref{eq:telescope}. The zero coefficient is feasible and each stage objective is at most $W$.
+\end{proof}
+
+\paragraph{What is retained across fits.}
+Consider two histories with identical lifted rows in the current fit. Every direction in \eqref{eq:program} evaluates to the same number on both. If that row has appeared $n$ times in the buffer, any feasible coefficient has absolute value at most $\sqrt{S/n}$ there. A new history can therefore benefit from several samples at other histories with the same row. Conversely, the type-one coefficient of \sect{sec:example} vanishes on all type-zero rows, leaving its value at a type-one query unconstrained by their number. Both conclusions follow from the same historical constraint. After refitting, these comparisons must use the new model's features on \emph{all} stored histories, since \eqref{eq:global} holds for one pair of models at a time.
+
+The optimizer at a high-bonus prefix may differ from the local operator-error witness. To decide what to do there, we use the optimizer itself to choose a continuation and a score.

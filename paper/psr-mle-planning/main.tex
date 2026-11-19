@@ -1,0 +1,184 @@
+\documentclass[sigconf,nonacm]{acmart}
+\usepackage{amsmath,mathtools}
+\settopmatter{printfolios=true,printacmref=false}
+\setcopyright{none}
+\renewcommand{\shortauthors}{}
+\setlength{\emergencystretch}{0.7em}
+\newcommand{\E}{\mathbb E}
+\newcommand{\R}{\mathbb R}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\Hell}{\mathsf h}
+\newcommand{\U}{\mathcal U}
+\newcommand{\A}{\mathcal A}
+\newcommand{\Obs}{\mathcal O}
+\newcommand{\K}{\mathcal K}
+\newcommand{\B}{\mathcal B}
+\newcommand{\I}{\mathcal I}
+\newcommand{\cE}{\mathcal E}
+\newcommand{\wh}{\widehat}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\softO}{\widetilde O}
+\newcommand{\st}{\star}
+\newcommand{\fused}[1]{\lVert #1\rVert_{\mathrm F}}
+\newcommand{\dual}[1]{\lVert #1\rVert_{\mathrm F,*}}
+\newcommand{\pn}[1]{\lVert #1\rVert_{\Pi}}
+\newcommand{\ip}[2]{\langle #1,#2\rangle}
+\newcommand{\sect}[1]{Section~\ref{#1}}
+\begin{document}
+\title[Learning PSRs with Ordinary MLE]{Learning Predictive State Representations with Ordinary Maximum Likelihood and Model Planning}
+\begin{abstract}
+How can a learner decide whether to trust a single maximum likelihood fit of a partially observed system? We construct a trajectory reward from the fitted probabilities of observable tests. Its expected value bounds the trajectory prediction error of each policy. When planning finds a large reward, the optimizing coefficients specify actions and scores for testing the uncertain prediction in the environment. Sampling the resulting experiment either adds coverage of a true predictive direction or exposes a discrepancy that later fits must account for. For a finite realizable class of uniformly B-stable predictive state representations, the algorithm learns an $\eps$-optimal policy in $\softO(r\Lambda_B^4 A U^2 H^4\beta/\eps^2)$ episodes with $\softO(rH)$ calls each to ordinary maximum likelihood estimation and single-model planning. Here $r$ is the true reachable rank, $U$ counts core action strings, $A$ is the number of actions, and $\beta$ measures likelihood complexity. The final model supports planning for any bounded observable reward.
+\end{abstract}
+\maketitle
+
+\section{Introduction}
+A job arrives with a cue. The agent chooses a station, sees a ready signal, selects a processing mode and observes success or failure. Both stations emit the same signal. Suppose the agent has always routed jobs to the left. A model that predicts success on the right can maximize the likelihood of every observation so far. If the agent follows its recommendation, which jobs should it route right, and which processing mode will reveal whether that prediction is correct?
+
+This question has a precise formulation under partial observability. A policy changes both the distribution of the histories the agent visits and the experiments it performs after reaching them. Let $P^\pi_\theta$ denote the law of a complete observed trajectory under policy $\pi$ and environment $\theta$. For any total trajectory reward in $[0,1]$, changing a model's trajectory law changes the value of $\pi$ by at most the total variation (TV) distance between the two laws. Thus it suffices to learn a model whose predictions are accurate under every policy. This criterion specifies what exploration should achieve even when the task reward is supplied after learning.
+
+\paragraph{From a set of models to one fit.}
+Reward-free OMLE \cite[Algorithm~2]{omle} expresses the exploration problem as a search for disagreement. Given a likelihood confidence set $\mathcal C_k$, it looks for a policy and a pair of models attaining
+\[
+ \max_{\pi}\max_{\theta,\theta'\in\mathcal C_k}
+       \TV(P_\theta^\pi,P_{\theta'}^\pi).
+\]
+In the station example this search can exhibit two models with different success probabilities at the right station. The maximizing policy says how to expose that difference. Ordinary MLE provides a different interface. It returns a single fitted model $\wh\theta_k$. The learner can simulate this model and plan within it, while the uncertainty left by untried actions must be inferred from the experiments already run.
+
+Predictive state representations (PSRs) give a way to express the missing uncertainty. They describe a history by the probabilities of observable future tests \cite{littman,singh}. Several histories can share a low-dimensional space of predictive states even when the observations themselves are numerous. Chen, Bai and Mei \cite{bstable} show how B-stability controls the effect of a local error in these coordinates on all possible future trajectories. PSR-UCB already plans for an uncertainty bonus in a single fitted model \cite{psrucb}. Its estimate maximizes likelihood over a data-dependent subset that lower-bounds the probabilities of sampled prefixes. We study an oracle that maximizes the ordinary joint likelihood over the supplied class. The statistical question is how that likelihood controls conditional tests at histories selected during exploration. The algorithmic question is how to use the resulting predictions for many episodes before paying for another model fit.
+
+\paragraph{A reward for the stopping decision.}
+Suppose that, after fitting $\wh\theta_k$, we can supply the planner with a history reward $b_k$ satisfying
+\begin{equation}
+ \TV(P_\st^\pi,P_{\wh\theta_k}^\pi)
+ \le \E_{\wh\theta_k,\pi}b_k \qquad \text{for every }\pi .
+ \label{eq:intro}
+\end{equation}
+Everything on the right can be evaluated in one model. If its maximum is small, we may plan for the task reward and return that policy. If the maximum is large, the planner identifies histories contributing to the uncertainty. There are two reasons why reaching such a history may leave a consequential prediction untested. The policy can choose a familiar continuation at the new history, and the fitted model can assign the history much more probability than the real system does. An exploration algorithm must account for both effects.
+
+\paragraph{How a certificate determines an experiment.}
+We decompose trajectory error one stage at a time. The two terms exposed at a history are predictions about core tests that start now and predictions about a current observation followed by an action and a next-stage test. This gives a specific set of features on which to measure uncertainty. For a new prefix, we maximize a linear functional of these features subject to a small squared value on old prefixes. Every local trajectory-error direction fits within the feasible set on a single high-probability likelihood event. Its support value therefore gives the desired reward. To use the maximizing direction in the environment, we write each coefficient as a mixture of tests with signed scores. The decomposition is obtained as part of the same cone program that evaluates the reward.
+
+\paragraph{Counting fits when the representation changes.}
+Freezing the planner and collecting a larger batch increases the number of samples per fit. To bound the number of fits we also need to know what each batch contributes after all histories are reencoded by a new model. Our diagnostic mixes the planned policy with the tests selected by its score. A large planned reward then implies either a poorly covered direction along the true roll-in, or a detectable discrepancy in the diagnostic's law. The first case increases empirical coverage in the true predictive space. In the second, cutting the diagnostic at a random stage constrains the errors of every later fit on the old diagnostic distribution. Large errors in later rounds must then occur in directions that distribution covers poorly. Two covariance matrices in the same fixed true representation give the $\softO(rH)$ count. Work on adaptivity constraints also studies the number of policy switches and deployment batches \cite{xiong}. Our count charges calls to estimation and planning. A frozen batch executes several test controllers using a single fit and planned policy.
+
+\section{Setting and computational access}\label{sec:setting}
+The horizon is $H$. At stage $h$ the environment emits $o_h\in\Obs$ and the learner takes $a_h\in\A$, where both alphabets are finite and $A=|\A|$. Write $\tau_h=(o_1,a_1,\ldots,o_h,a_h)$ and $x=\tau_{h-1}$. A policy specifies $\pi_h(a\mid x,o)$ on all histories. A model $\theta$ and a policy induce a trajectory law $P_\theta^\pi$ and value $V_{\theta,R}^\pi=\E_{\theta,\pi}R(\tau_H)$ for a known observable reward $R\in[0,1]$. A star denotes the true environment.
+
+\paragraph{Predictive coordinates.}
+A stage-$h$ test $j=(o_{h:h+\ell},a_{h:h+\ell-1})$ ends with an observation. Its probability is the chance of its observation string when its actions are imposed. All models share known finite lists $\U_h$ of core tests. Write $\alpha(j)$ for a test's action string, $U_h$ for the number of distinct such strings, $U=\max_h U_h$ and $D=\max_h|\U_h|$. The predictive state $q_h^\theta(x)$ lists the test probabilities. Add a terminal core $\U_{H+1}=\{\varnothing\}$ of value one. A proper B-representation specifies an initial vector and linear maps satisfying
+\begin{equation}
+ B_h^\theta(o,a)q_h^\theta(x)=
+ P_\theta(o\mid x)\,q_{h+1}^\theta(xoa).
+ \label{eq:update}
+\end{equation}
+Their products give the observable probabilities of the model and a normalized trajectory law under any policy. The action is chosen after $o$, so it does not affect the factor $P_\theta(o\mid x)$. On a history of zero model probability use a fixed valid predictive state at the same stage as a conditional version, with continuations from that state.
+
+\paragraph{Which dimensions enter the problem?}
+A group of core tests with the same action string can be observed in one experiment: draw the string, execute its actions and record the observations. The tests within a group have the same length and distinct observation strings. For example, all single-observation tests use the empty action string. With $d$ possible observations this gives $d$ coordinates measurable by one experimental design. Thus $D$ determines how many coordinates to compute and $U$ determines how many different strings share the sampling budget. A third dimension enters when we ask how many of the resulting vectors are linearly independent as the history changes.
+
+\paragraph{Reachable rank and stability.}
+The finite model class $\Theta$ contains the truth. At every stage its true reachable vectors $q_h^\st(x)$ span a space of dimension at most $r$, with $r\ge1$. To describe propagation of signed errors, let $\mathcal J_h$ contain the core tests maximal under the prefix order. For a signed vector $v$, put
+\begin{align}
+ N_{12}(v)&=\Big(\sum_\alpha\big(\sum_{j:\alpha(j)=\alpha}|v_j|\big)^2\Big)^{1/2},
+ \nonumber\\
+ N_{\Pi}(v)&=\max_\pi\sum_{j\in\mathcal J_h}\pi(j)|v_j|,
+ &\fused{v}&=\max\{N_{12}(v),N_\Pi(v)\}.
+ \label{eq:fused}
+\end{align}
+Here $\pi(j)$ is the product of action probabilities along the test. For an array of full suffixes, $\pn{\cdot}$ is the maximum policy-weighted absolute sum over those suffixes. Let $\B^\theta_{H:h}$ map $v$ to the array obtained by applying every full product $B^\theta_H\cdots B^\theta_h$. Every candidate satisfies the signed-input B-stability inequality \cite{bstable}
+\begin{equation}
+ \pn{\B^\theta_{H:h}v}\le \Lambda_B\fused{v}.
+ \label{eq:stable}
+\end{equation}
+Take $\Lambda_B\ge1$. Each action-string group has probability mass at most one, and the maximal leaves reached by a policy are disjoint. Thus $\fused{q_h^\theta(x)}\le\sqrt U$. We use the dual norm $\dual{c}=\sup_{\fused v\le1}c^\top v$ at its indicated stage.
+
+\paragraph{Why stability is stated on signed inputs.}
+A proper state has nonnegative test probabilities, but the difference of two states has both signs. A local change in dynamics creates a second signed vector, $(B_h^\theta-B_h^{\theta'})q$. Either vector has to be propagated through the remaining steps before its effect on reward is known. The left side of \eqref{eq:stable} measures exactly that effect after maximizing over continuations. On the right, $N_{12}$ groups outcomes observable under a common action string. The second term allows an experiment to choose an action after seeing an observation. If one branch calls for action $a$ and another for action $b$, one contingent policy can implement both prescriptions. The fused norm retains these two ways of testing a prediction. Its dual will specify a random experiment that executes their mixture.
+
+\paragraph{Access model.}
+An episode controller $\nu_i$ is chosen before episode $i$ and may adapt its actions to observations within the episode. Its log $\omega_i$ includes the choices of experimental branches. The ordinary cumulative MLE oracle returns a model in $\Theta$ with total log likelihood within $\xi$ of $\sup_{\theta\in\Theta}\sum_i\log p_\theta^{\nu_i}(\omega_i)$. The planning oracle takes one model, a bounded evaluable history reward, and a tolerance, and returns an executable policy within that tolerance of the optimal value. We assume polynomial-size oracle outputs, efficient execution and simulation, and polynomial-bit evaluation of likelihoods and predictive features to prescribed precision. The learner has the stated structural parameter bounds. Computational costs outside the oracles are measured in the explicit representation, alphabet sizes, data size and accuracy parameters.
+
+\section{Algorithm and main result}\label{sec:algorithm}
+For the finite-class result write
+\begin{equation}
+ \begin{gathered}
+ L=H+1,\qquad W=\Lambda_B\sqrt U,\qquad Y=\Lambda_B^2 A U,\\
+ \beta=\max\{1,\log(3|\Theta|/\delta)+\xi/2\}.
+ \end{gathered}
+ \label{eq:params}
+\end{equation}
+Here $W$ bounds a stage score, while $Y$ converts the squared Hellinger error of a randomized test into squared local prediction error.
+
+\begin{theorem}\label{thm:main}
+Under the assumptions in \sect{sec:setting}, for $0<\eps\le1$ and $0<\delta<1$, the algorithm below returns, with probability at least $1-\delta$, a policy $\wh\pi$ satisfying $\sup_\pi V_{\st,R}^\pi-V_{\st,R}^{\wh\pi}\le\eps$. Its real-episode budget $T$ and number of calls to each oracle are, respectively,
+\[
+ T=\softO\!\left(\frac{r\Lambda_B^4 A U^2 H^4\beta}{\eps^2}\right),
+ \qquad K_{\rm oracle}=\softO(rH).
+\]
+The remaining computation is polynomial under the stated access model.
+\end{theorem}
+
+\begin{corollary}[Planning after exploration]\label{cor:reward}
+On the success event, the final fit satisfies $\sup_\pi\TV(P_\st^\pi,P_{\wh\theta_k}^\pi)\le\eps/4$. The same fit supports an $\eps$-optimal policy for each observable $R\in[0,1]$ with one additional planning call at accuracy $\eps/2$ for each reward.
+\end{corollary}
+To see the consequence of uniformity, let $\pi^\star$ be optimal under the truth, $\hat\pi$ the planner's policy, and $\Delta=\sup_\pi\TV(P_\st^\pi,P_{\wh\theta_k}^\pi)$. In order from left to right, transfer the optimum's value, plan in the fit, and transfer the output's value back:
+\[
+ V_{\st,R}^{\pi^\star}-V_{\st,R}^{\hat\pi}
+ \le \Delta+\eps/2+\Delta .
+\]
+Here the two transfers concern different policies. Bounding only the error along the exploration policy would leave both terms uncontrolled.
+
+\subsection{Exploration with ordinary MLE}
+Store a data set $\mathcal D$ of complete logged episodes, a multiset $\I_h$ of training prefixes at each stage, and the number $N_0$ of initial-core episodes. The log includes both the physical trajectory and the randomized choices used to collect it. The stage buffers can therefore be reconstructed from $\mathcal D$. The learner reevaluates the predictive features of these same histories whenever the fit changes.
+
+\begin{figure}[t]
+\hrule\smallskip
+\textbf{Algorithm 1}\quad Learning with a fitted PSR\par
+\smallskip
+\emph{Input.} Model class, core tests, structural bounds, accuracy $\eps$, confidence $1-\delta$, and task reward $R$.\par
+\smallskip
+Initialize $\mathcal D$ and the buffers to empty. Until the deterministic cap in Appendix~\ref{app:budget}:
+\begin{enumerate}
+\item Fit $\wh\theta_k$ by ordinary MLE on $\mathcal D$. Build the stage programs from the reencoded buffers.
+\item Plan for the attained reward $\widetilde b_k$ in $\wh\theta_k$ and estimate the returned policy's bonus value by fitted-model simulation. Use tolerance $\eps/128$ in both steps.
+\item If the estimate is at most $3\eps/16$, return the policy obtained by planning for $R$ in $\wh\theta_k$ to accuracy $\eps/2$.
+\item Freeze $\wh\theta_k$, the policy $\pi^k$, and the score-selection rule. Collect the training and nested diagnostic batches. Append every episode to $\mathcal D$, update the training buffers and $N_0$, then refit.
+\end{enumerate}
+Return failure if the cap is reached.\par\smallskip\hrule
+\caption{The only optimization over models occurs in step 1. The two planning calls optimize different rewards in the same model.}
+\Description{Pseudocode for fitting a model, planning to maximize its uncertainty reward, and either returning a policy or collecting more data.}
+\label{fig:algorithm}
+\end{figure}
+
+Figure~\ref{fig:algorithm} gives the decision rule. The trajectory reward is the sum of a scalar initial-state term and the attained support values of the stage programs in \sect{sec:certificate}. The numerical rule has a fixed tie convention, so revisiting a history in the same round produces the same coefficient and the same experiment. When exploration continues the learner freezes this rule before gathering the first episode of either batch.
+
+\emph{Training batch.} At each $h=1,\ldots,H$, run $m_k$ fresh episodes following $\pi^k$ to $x=\tau_{h-1}$. Flip a fair coin. The first branch draws a uniform stage-$h$ core action string and executes it. The second observes $o_h$, takes a uniform action, and executes a uniform stage-$(h+1)$ core string. Retain $x$ in the stage buffer $\I_h$. Run $m_k$ additional initial-core experiments from the empty history and increment their count $N_0$. Every experiment uses a common completion rule through the horizon. For a chosen string, one observes which listed observation outcome occurred, or that none occurred.
+
+\emph{Nested diagnostic batch.} The coefficient rule and $\pi^k$ specify the controller $\rho_k$ constructed in \sect{sec:diagnostic}. In each of $n_N$ fresh episodes draw $j$ uniformly from $\{0,\ldots,H-1\}$. The cut $E_0(\rho_k)$ runs an initial uniform-core experiment. For $j\ge1$, $E_j(\rho_k)$ follows $\rho_k$ through stage $j-1$, observes $o_j$, replaces the action by a uniform one, and executes a uniform next-core string. Log the cut, choices already drawn, and new experimental choices. A scheduled choice superseded by the cut receives a null label. The diagnostic data contribute complete likelihoods. Only the designated training histories supply rows to the stage programs.
+
+A frozen round spends $(H+1)m_k+n_N$ real episodes before paying for another MLE call. The $m_k$ episodes at each training stage provide rows at that stage's roll-in distribution. The $n_N$ nested experiments constrain the law induced by the diagnostic as a whole. Appendix~\ref{app:budget} specifies these batch sizes.
+
+\paragraph{Relation to statistical rates.}
+Under B-stability, \citet[Theorem~9]{bstable} obtain the structural factor $r\Lambda_B^2 AUH^2/\eps^2$ for OMLE. Their rate also includes a likelihood complexity and a logarithm involving the true one-step operator norm. Our additional factor $\Lambda_B^2 UH^2$ comes from the precision required of the diagnostic experiment in \sect{sec:progress}. Under a signed $\ell_1$ stability bound $\gamma^{-1}$, the inequality $\|v\|_1\le\sqrt U\fused{v}$ gives $\Lambda_B=\sqrt U/\gamma$ and hence $T=\softO(rAU^4H^4\beta/(\gamma^4\eps^2))$. Under this parameterization, the main Theorem~1 of \citet{psrucb} states an episode bound with polynomial and likelihood factors
+\[
+ \left(r+U^2H/\gamma^2\right)
+ \frac{rD H^3 A^2 U^4\beta_{\rm UCB}}{\gamma^4\eps^2}.
+\]
+After separating the likelihood budgets, the ratio of our polynomial factor to theirs is $H/[AD(r+U^2H/\gamma^2)]$. The dimension $D$ enters our explicit cone programs; the statistical effect of enlarging the candidate class enters through $\beta$.
+
+\input{overview}
+\input{certificate}
+\input{diagnostics}
+\input{progress}
+\input{specialcase}
+\section{Discussion}
+The episode budget and the oracle-call budget arise at different points in the argument. A training prefix is useful when it expands coverage in the true prediction space. A diagnostic episode is useful when it constrains a fitted model that disagrees with the truth under the current experiment. Both kinds of information accumulate across fits because their progress can be expressed in one fixed coordinate system. The sample cost of the second mechanism depends on the squared scale of its signed score. A sharper connection between diagnostic error and the variance of that score could reduce this cost while retaining the same stopping rule and update count.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+\appendix
+\input{appendix}
+\end{document}

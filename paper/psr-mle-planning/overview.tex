@@ -1,0 +1,34 @@
+\section{Two outcomes of the same optimal test}\label{sec:example}
+A large exploration reward can lead to two different kinds of data. We exhibit both in a three-stage system, solving the stage program and following its optimizer through the experiments in Algorithm~1.
+
+\subsection{A prediction hidden by the task policy}
+A job arrives with a fair binary cue $c\in\{+,-\}$. The first action chooses a route $L$ or $R$. Either station emits the same observation, \emph{ready}. At this point the job has an unobserved type $t\in\{0,1\}$. In the true system it is one exactly after $(+,R)$. A second model assigns type one after either cue on route $R$. Processing in mode $a$ returns the type as the binary final observation $y$. Mode $b$ returns an independent fair bit. The reward is $y$.
+
+In the second model, always routing right and using $a$ attains value one. In the true system that policy earns $1/2$. A true optimum routes right and uses $a$ on $+$, then uses $b$ on $-$, for value $3/4$. An agent choosing $b$ after every route observes exactly the same trajectory law in both systems. Nevertheless the cue and the route retain information about the consequence of changing the processing mode.
+
+Use the two cue outcomes as the stage-one core. At stage two the two tests observe \emph{ready}, impose $a$, and observe $y=0$ or $1$. The final core consists of the two possible outcomes of $y$. Each core uses a single action string, so $U=1$. Write $e_0,e_1$ for the two type vectors and $m=(1/2,1/2)^\top$. In either model $q_1=m$, $q_2=e_t$, and the observable updates on the effective actions are
+\begin{align*}
+ B_1(c,s)v &= v_c e_{t(c,s)},\\
+ B_2(\mathrm{ready},a)v &=v, &
+ B_2(\mathrm{ready},b)v &=m\mathbf{1}^{\top}v,\\
+ B_3(y,\cdot)v &= v_y .
+\end{align*}
+Here $s$ denotes the selected route. The two actions are indexed by their stage-specific names. Every basis vector induces a probability law on the remaining outcomes under each policy, so the continuation norm of a signed vector is at most its $\ell_1$ norm. With one action string the fused norm is exactly $\ell_1$. We supply $\Lambda_B=2$ as a common stability upper bound.
+
+\subsection{The stage optimizer and its experiment}
+Consider a buffer with $n$ designated training prefixes at each stage and $n$ initial-core episodes. The training roll-in always routes left and uses $b$. Both models encode every stage-two training prefix as $e_0$ and every stage-three training prefix as $m$. The stage-two lifted row at type $i$ is $(e_i,e_i,m)$, listing the current predictions and the two joint blocks. For coefficients $(u,w_a,w_b)$ write its evaluation as
+\[
+ g_i=u_i+(w_a)_i+w_b^\top m .
+\]
+The structured ball in \eqref{eq:geometry} imposes $\|u\|_\infty\le1$ and $\|w_a\|_\infty+\|w_b\|_\infty\le1$. The historical constraint in \eqref{eq:program} reduces to $n g_0^2\le S$. At a prefix encoded as $e_1$ the objective is $g_1$. The norm constraints give $g_1\le2$, and the choice
+\[
+ u=e_1,\qquad w_a=e_1,\qquad w_b=0
+\]
+attains two with $g_0=0$. Thus the exact stage support is two. Every optimizer satisfies $g_1-g_0\ge 2-\sqrt{S/n}$. For the displayed optimizer, each nonzero coefficient uses a single string with mass one. Both the current-core and the transition experiment take action $a$ after \emph{ready} and score $\mathbf1\{y=1\}$. Each has conditional mean $i$ at type $i$.
+
+\subsection{What one high score can buy}
+First let the fit equal the truth. Route right on $+$ and left on $-$, then use $b$. Half the stage-two histories have type one. The displayed coefficient has zero historical energy in the true coordinates, so the expected true support is at least one. Each new stage-two training prefix from the positive cue adds an outer product in the previously unobserved type-one direction. All diagnostic laws agree because the fitted dynamics are correct.
+
+Now use the second model as the fit. Route right on $-$ and left on $+$, again using $b$. On the negative cue the fit predicts $e_1$ where the environment has $e_0$. The expected fitted stage support is at least one, and the policy's trajectory TV is zero. In the true system the root and every queried stage row coincide with their respective training rows. Hence any coefficient tuple of total historical energy at most $\cE$ has summed evaluation at most $\sqrt{(H+1)\cE/n}$ by Cauchy--Schwarz. Taking $n$ sufficiently large makes the true support smaller than the first threshold in \eqref{eq:either}. In contrast, each displayed stage-two diagnostic gives opposite deterministic outcomes on the negative cue. Its TV is at least $1/2$, and the logged mixture in \eqref{eq:rho} has TV at least $1/(3H)$.
+
+Finally, consider cut $2$ of that mixture. With probability $1/3$ the logged component is the full policy. Within it the negative cue occurs with probability $1/2$ and the fresh uniform action selects $a$ with probability $1/2$. On this observable branch the two terminal laws have disjoint support. The branch has mass $1/12$ under both models, so its contribution to squared Hellinger distance is $1/12$. A uniform cut chooses stage two with probability $1/3$, giving at least $1/36$ per nested episode. Consequently $n_N$ repetitions charge at least $n_N/36$ to the likelihood budget of any later fit with these dynamics. The two calculations concern a fixed policy and a designated buffer. The general proof establishes progress for the policy actually returned by the planner, whichever maximizing directions its stage programs select.

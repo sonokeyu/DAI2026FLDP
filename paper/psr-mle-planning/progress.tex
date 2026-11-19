@@ -1,0 +1,151 @@
+\section{Exploration progress and complexity}\label{sec:progress}
+The alternatives in \eqref{eq:either} are statements about one frozen round. To bound the number of rounds, we need a quantity that persists after the model is replaced. There is no reason for a direction with large fitted support at one round to retain a comparable length in the next fitted model. The transfer inequality lets us do the counting entirely in the space of the true environment.
+
+\subsection{One coordinate system for the full run}
+At stage $h$ let $\mathcal Q_h$ consist of true predictive states reachable with positive probability. Its span has dimension $r_h\le r$. Fix any orthonormal coordinates for that span and choose $r_h$ elements of $\mathcal Q_h$ whose column matrix $X_h$ has largest absolute determinant in those coordinates. A maximizer exists since the finite horizon and alphabets give finitely many physical histories. Every reachable state can now be expressed as
+\[
+ q_h^\star(x)=X_h\chi_h(x),\qquad \|\chi_h(x)\|_\infty\le1 .
+\]
+By multilinearity, replacing basis column $j$ by the query changes the determinant by the factor $\chi_{h,j}(x)$. Maximality forces the coordinate bound. Choosing basis vectors from the reachable set has a second consequence. Any coefficient measuring a valid state with magnitude at most $W$ has coordinate value at most $W$ on each basis column.
+
+Let $T_h^\star$ denote the linear map $q\mapsto(q,(B_h^\star(o,a)q)_{o,a})$. Then $\phi_h^\star(x)=T_h^\star X_h\chi_h(x)$. The lift may have many coordinates, yet its first block is $q$ and its reachable span has exactly the dimension of the original reachable span. For a stage coefficient $v$, its coordinate row is $(T_h^\star X_h)^\top v$. Its entries are the evaluations of $v$ on the lifted basis states. These facts are used twice below, once for an observed sample matrix and once for an expected sample matrix. Include the scalar initial block as $h=0$ with $\chi_0=1$.
+
+\subsection{Progress on the training histories}
+Define the empirical matrix from the stage-$h$ training rows collected before round $k$,
+\[
+ \Sigma_{k,h}=\lambda_a I+\sum_{t<k,i}\chi_h(x_{t,h,i})\chi_h(x_{t,h,i})^\top,
+ \qquad \lambda_a=\frac{\cE}{rLW^2}.
+\]
+At the root use one row per initial-core episode. Let $\ell_{k,h}=\chi_h^\top\Sigma_{k,h}^{-1}\chi_h$ at the current prefix. For a feasible tuple in $\mathcal V_{\st,k}$, write $w_h$ for its coordinate coefficients. Its total historical energy is at most $\cE$ and its total ridge energy is at most $\lambda_a rLW^2=\cE$. Cauchy--Schwarz in the block-diagonal matrix of the $\Sigma_{k,h}$ yields
+\begin{align}
+ b_{\st,k}^2 &\le 2\cE \sum_{h=0}^H\ell_{k,h},\nonumber\\
+ b_{\st,k}^2 &\le R_a^2\sum_{h=0}^H\min(1,\ell_{k,h}),
+ \qquad R_a^2=\max\{2\cE,L^2W^2\}.
+ \label{eq:clip}
+\end{align}
+For the second line use the first if all leverages are at most one, and the range $b_{\st,k}\le LW$ otherwise.
+
+Under the first alternative in \eqref{eq:either}, Jensen's inequality makes the expected sum of clipped leverages at least $\tau_0^2/(4R_a^2)$. Each of the $m_k$ independent roll-ins at a given stage has exactly the required marginal. The batch size in Appendix~\ref{app:budget} makes the realized sum over the batch at least one with the allocated conditional probability. If $C_h$ is the new batch outer-product sum at stage $h$, then
+\begin{equation}
+ \sum_h\log\frac{\det(\Sigma_{k,h}+C_h)}{\det\Sigma_{k,h}}
+ \ge\log\Big(1+\sum_h\tr(\Sigma_{k,h}^{-1}C_h)\Big)
+ \ge\log 2 .
+ \label{eq:detgrowth}
+\end{equation}
+The first inequality follows from $\det(I+M)\ge1+\tr M$ for $M\succeq0$ and multiplication across stages. The trace counts the unclipped leverage. Thus a batch can double the product of the determinants even when every individual row has leverage below one.
+
+\subsection{Progress under the diagnostic policy}
+For the second alternative, reverse the product expansion in \eqref{eq:telescope}. Now the prefix follows the true model and the remaining operators belong to the fit. Write $G_{k,h}$ and $G_{k,0}$ for \eqref{eq:F} with the two model roles exchanged. For any controller $\nu$,
+\begin{equation}
+ \TV(P_{\wh\theta_k}^\nu,P_\st^\nu)
+ \le G_{k,0}+\sum_{h=1}^H \E_{\st,\nu}G_{k,h}(q_h^\st).
+ \label{eq:reverse}
+\end{equation}
+A logged controller contributes the same causal action and label factors in both products. After summing the absolute differences, its marginalized action rule is a valid history policy. This establishes the same bound for the logged experiment.
+
+\paragraph{Why intervene inside the diagnostic?}
+Suppose a future fit agrees with an old diagnostic on its terminal score. That agreement alone controls one expected linear combination. The determinant argument needs a bound on a sum of \emph{squared local errors} for the future fit, evaluated at states reached by the old diagnostic. A single terminal mean need not control such a sum. The learner therefore treats the diagnostic itself as a roll-in policy and cuts it at a random stage. The uniform test at the cut measures the coordinates in the local decomposition regardless of what continuation the future fit may prefer. This is the reason for nesting a second experiment inside the first one.
+
+Write $J_j(\nu)=\Hell^2(P_\st^{E_j(\nu)},P_{\wh\theta_k}^{E_j(\nu)})$. Condition on all data used to choose the fit and controller. The remaining probabilities refer to a fresh episode. A cut records its physical prefix, any controller labels already drawn, and its new random choices. It can therefore measure errors under an adaptive roll-in. The following comparison locates each local test inside that log.
+
+\begin{lemma}[Which cut measures a test]\label{lem:cutprojection}
+Let $c_h(x),d_h(x)$ be the current-core and one-step-plus-core conditional squared distances from \sect{sec:certificate}, and $e_H(x)$ the conditional squared Hellinger distance for the final observation. Expectations below use physical histories under the true system and $\nu$. For $h<H$, $\E d_h\le2J_h$. At the root $c_1\le J_0$. For $2\le h\le H$, $\E c_h\le2A J_{h-1}$. The same last bound holds for $\E e_H$ at $h=H\ge2$, and $e_1\le J_0$ when $H=1$.
+\end{lemma}
+\begin{proof}
+For joint laws $P,Q$ of $(X,Z)$ put $a(x)=\Hell^2(P_{Z\mid x},Q_{Z\mid x})$. Cauchy--Schwarz gives
+\[
+ \big(1-\Hell^2(P,Q)\big)^2
+ \le \E_{P_X}(1-a(X))^2 \le 1-\E_{P_X}a(X).
+\]
+Thus $\E_{P_X}a(X)\le2\Hell^2(P,Q)$, including for any proper conditional version on a $Q_X$-null prefix. Project the log of $E_h$ to the physical prefix $x$, the current observation, uniform action, fresh next-core string and its observed outcomes. Under each model the conditional law of this suffix is precisely the experiment defining $d_h$. The true prefix law is the roll-in law of $\nu$. Hellinger distance decreases under projection, proving the first claim.
+
+To recover the current-core experiment for $h>1$, use the preceding cut. Write $x=yoa$ with $y=\tau_{h-2}$. The joint probability of a physical prefix and compatible past controller labels factors into the environment's observation probabilities and a controller factor common to both models. Summing over labels gives the marginal action kernel $\bar\nu(a\mid y,o)$, including when $\nu$ retains a private random choice across stages. The true physical prefix masses under the two designs satisfy
+\begin{align*}
+ d_\nu(yoa)&=d_\nu(y)p_\st(o\mid y)\bar\nu(a\mid y,o),\\
+ d_{\rm cut}(yoa)&=d_\nu(y)p_\st(o\mid y)/A .
+\end{align*}
+In particular $d_\nu(x)\le A d_{\rm cut}(x)$ at every prefix. After the replaced action, cut $h-1$ draws its own core string independently. Project to $(x,\text{fresh string},\text{test observations})$. The conditional squared distance equals $c_h(x)$, giving
+\[
+ \sum_x d_\nu(x)c_h(x)
+ \le A\sum_x d_{\rm cut}(x)c_h(x)\le2A J_{h-1}.
+\]
+At the last stage the same log contains $o_H$, so projecting to $(x,o_H)$ proves the bound for $e_H$. At the empty prefix the initial cut measures the core directly and, for $H=1$, records $o_1$ directly. These projections give the root bounds without a change of prefix law.
+\end{proof}
+
+\begin{lemma}[Error measured by a random cut]\label{lem:nested}
+For each frozen controller $\nu$,
+\[
+ G_{k,0}^2+\sum_{h=1}^H\E_{\st,\nu}G_{k,h}(q_h^\st)^2
+ \le 24Y\sum_{j=0}^{H-1}J_j(\nu).
+\]
+\end{lemma}
+\begin{proof}
+We apply the local B-error decomposition of \citet[Propositions D.1--D.2]{bstable} in the reverse direction. Insert $\wh B_h\wh q_h$ between $\wh B_h q_h^\st$ and $B_h^\st q_h^\st$. The first difference propagates $\Delta q$ through a fitted continuation. The second gives $\Delta z$. Stability, \eqref{eq:drift}, and $(s+t)^2\le2s^2+2t^2$ imply at $h<H$
+\[
+ G_{k,h}^2\le4\Lambda_B^2\big(Uc_h+AUd_h\big).
+\]
+At $h=H$, the joint block is a scalar observation probability, common across actions. Writing $t_H$ for the conditional TV of $o_H$ gives $G_{k,H}\le\Lambda_B\fused{\Delta q}/2+t_H$. Since $t_H^2\le2e_H$, this yields $G_{k,H}^2\le4\Lambda_B^2 U c_H+4e_H$. The root contributes at most $2\Lambda_B^2 U J_0$.
+
+For $H\ge2$, Lemma~\ref{lem:cutprojection} bounds the stage-one expectation by $4YJ_0+8YJ_1$ and each later interior expectation by $8Y(J_{h-1}+J_h)$. The terminal expectation is at most $16YJ_{H-1}$. Summing charges costs at most $24Y$ per cut. For $H=1$, the root costs at most $2YJ_0$ and the terminal stage at most $8YJ_0$.
+\end{proof}
+
+Take $\Gamma=24YL$. Each previous nested batch supplies $n_N$ copies of the same empty-prefix risk for the current fit, with $j$ integrated uniformly in its logged law. Its squared Hellinger distance is $H^{-1}\sum_j J_j(\rho_t)$. By Lemmas~\ref{lem:mle} and \ref{lem:nested},
+\begin{equation}
+ \sum_{t<k}\Big[G_{k,0}^2+
+  \sum_{h=1}^H\E_{\st,\rho_t}G_{k,h}(q_h^\st)^2\Big]
+ \le\Gamma\beta/n_N\le\eta^2/128 .
+ \label{eq:nestedenergy}
+\end{equation}
+In the $t$th summand of \eqref{eq:nestedenergy}, the controller $\rho_t$ is the one that actually collected the data, while $G_{k,h}$ measures the error of today's fit. The empty designated prefix integrates this error over the full roll-in law of $\rho_t$. This is the distribution whose covariance we retain across fits.
+
+\subsection{From predictive disagreement to determinant growth}
+For clarity, first consider a scalar true coordinate and a linear error $G(\chi)=|w\chi|$. If the current fit has squared error at most $b$ on the old distributions, then
+\[
+ w^2\sum_{t<k}\E_{\st,\rho_t}\chi^2\le b .
+\]
+A current distribution with large $\E_{\st,\rho_k}|w\chi|$ must have appreciable second moment compared with that old coverage. For a general PSR two details change: the error is a seminorm, whose supporting coefficient may vary with the query, and the error budget is shared across stages. The domination argument below handles both while keeping the covariance fixed.
+
+Use $G_{k,h}(\chi)$ also for its pullback to the coordinate space, including the root seminorm $G_{k,0}|\chi_0|$. Its value at each basis vector $e_j$ is at most $W$: the fitted full continuation of the true basis state and the true one-step update followed by a fitted continuation each have norm at most $W$ before the factor $1/2$. With $\lambda_b=\eta^2/(128rLW^2)$, put
+\begin{align*}
+ \Xi_{k,h}&=\lambda_b I+\sum_{t<k}\E_{\st,\rho_t}\chi_h\chi_h^\top,
+ \\
+ a_{k,h}&=\lambda_b\sum_j G_{k,h}(e_j)^2+
+       \sum_{t<k}\E_{\st,\rho_t}G_{k,h}(\chi_h)^2 .
+\end{align*}
+By \eqref{eq:nestedenergy}, $\sum_h a_{k,h}\le\eta^2/64$. For each current $\chi$, take a linear functional $w$ supporting the seminorm there. Global domination $|w^\top y|\le G_{k,h}(y)$ gives $w^\top\Xi_{k,h}w\le a_{k,h}$. In particular,
+\[
+ G_{k,h}(\chi)^2\le a_{k,h}\,\chi^\top\Xi_{k,h}^{-1}\chi.
+\]
+To compare old and current coverage, define the expected leverage of the current diagnostic,
+\[
+ d_{k,h}=\E_{\st,\rho_k}\big[\chi_h^\top\Xi_{k,h}^{-1}\chi_h\big].
+\]
+Jensen’s inequality gives $\E_{\st,\rho_k}G_{k,h}(\chi_h)\le\sqrt{a_{k,h}d_{k,h}}$. In the second case of \eqref{eq:either}, the reverse telescope then forces
+\begin{align*}
+ \eta
+ &\le \sum_h\sqrt{a_{k,h}d_{k,h}}\\
+ &\le\Big(\sum_h a_{k,h}\Big)^{1/2}
+      \Big(\sum_h d_{k,h}\Big)^{1/2}
+ \le \tfrac{\eta}{8}\Big(\sum_h d_{k,h}\Big)^{1/2}.
+\end{align*}
+It follows that $\sum_h d_{k,h}\ge64$. The trace corresponding to this number is the sum of $\tr(\Xi_{k,h}^{-1}\E_{\st,\rho_k}[\chi_h\chi_h^\top])$. Adding the new population covariances gives log-determinant growth at least $\log 2$ by \eqref{eq:detgrowth}. The empirical matrix counts individual observed training prefixes. One update of $\Xi$ adds \emph{one expected outer product per stage} for the current diagnostic. The $n_N$ repetitions have already been used to shrink the error budget in \eqref{eq:nestedenergy}; multiplying this covariance update by $n_N$ would count their effect twice. Both matrices serve only in the analysis.
+
+\subsection{Termination and policy value}
+Over $K$ completed nonstopping rounds both determinants are nondecreasing. Since $\|\chi_h\|_2^2\le r$, their total increases from their initial ridges imply
+\begin{equation}
+ K\log2\le rL\log(1+Km_Kr/\lambda_a)
+              +rL\log(1+Kr/\lambda_b).
+ \label{eq:cap}
+\end{equation}
+The right-hand side grows logarithmically in $K$, giving $\softO(rH)$ updates. Appendix~\ref{app:budget} turns this inequality into a deterministic cap and allocates failure probabilities. The batch cost can now be read off directly. To detect the second alternative we need resolution $\eta$ of order $\eps/(LW)$. Turning a squared-error allowance of order $\eta^2$ into the historical bound \eqref{eq:nestedenergy} requires
+\[
+ n_N=O(YL\beta/\eta^2)=O(YL^3W^2\beta/\eps^2).
+\]
+Here $YL$ comes from summing the adjacent-cut local-error bounds and uniform mixing over the cut; $L^2W^2$ comes from the diagnostic transfer. The training batch uses $\softO((YL^2\beta+L^3W^2)/\eps^2)$ episodes per round. Multiplying the larger scale by $\softO(rL)$ rounds gives the episode count in Theorem~\ref{thm:main}. Expanding $YW^2=\Lambda_B^4 AU^2$ identifies where the stability and action-string factors enter. Increasing the precision of each frozen batch affects this episode count while leaving the growth per charged round at $\log 2$.
+
+At a stopping round, each stage's certified value is within $\zeta=\eps/(256L)$ of its exact support. With the planning and simulation tolerances of \sect{sec:algorithm}, we obtain
+\[
+ \sup_\pi\E_{\wh\theta_k,\pi}b_k
+ \le 3\eps/16+2\eps/128+L\zeta=53\eps/256<\eps/4.
+\]
+Proposition~\ref{prop:cert} gives uniform trajectory TV at most $\eps/4$. Transferring the value of a true optimal policy to the fitted model and transferring the output policy back costs at most twice this quantity. The final planning error is at most $\eps/2$. This proves the policy claim in Theorem~\ref{thm:main}. The same stopping event supports any subsequent choice of observable reward in $[0,1]$, with one planning call for that reward.
