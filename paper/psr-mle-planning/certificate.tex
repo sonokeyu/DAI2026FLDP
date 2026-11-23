@@ -58,14 +58,14 @@ In each episode select a predictable rule for splitting its recorded data into a
  \sum_{i\le n} a_{\wh\theta,i}(X_i)\le\beta .
 \]
 \end{lemma}
-The proof in Appendix~\ref{app:likelihood} applies to the ordinary joint likelihood of every complete episode. In training episodes the designated prefix ends immediately before the test coin. In initial-core and nested episodes it is empty. The first choice controls conditional error at the histories actually observed. The second controls a population distance between complete experimental laws.
+Training episodes split immediately before the test coin, so their conditional risk is evaluated at the observed history. Initial-core and nested episodes split at the empty prefix, giving a population risk for the whole experiment.
 
 For a fixed candidate write $p,q$ for the true and candidate joint laws and $a(x)$ for conditional squared Hellinger error. Integrating a square-root likelihood ratio over the suffix yields
 \[
  \sum_z p(x,z)\sqrt{\frac{q(x,z)}{p(x,z)}}
    =\sqrt{p_X(x)q_X(x)}\,\bigl(1-a(x)\bigr).
 \]
-Multiply by $e^{a(x)}$. Since $e^t(1-t)\le1$ on $[0,1]$, summing over $x$ gives at most one, even as the experiment changes with past data. Iterating this calculation and applying the MLE likelihood inequality proves the lemma; Appendix~\ref{app:likelihood} gives the time-uniform argument. When the split is at a training prefix the random variable $a(X)$ appears inside the sum. When the prefix is empty it takes the same deterministic value for every repetition of a frozen design and a fixed candidate. Uniformity over candidates is what later permits substituting the current fit into the errors of old experiments.
+Multiply by $e^{a(x)}$. Since $e^t(1-t)\le1$ on $[0,1]$, summing over $x$ gives at most one, even as the experiment changes with past data. Iterating this calculation and applying the MLE likelihood inequality proves the lemma; Appendix~\ref{app:likelihood} gives the time-uniform argument. Uniformity over candidates permits evaluating today's fit on every earlier experimental design.
 
 \paragraph{Local calibration.}
 At a training prefix let $c_h(x)$ and $d_h(x)$ be the squared Hellinger distances between the two models for the following two test records. The current-core record contains the fresh uniform string and its observations. The one-step-plus-core record additionally includes the current observation and uniform action preceding the string. Each record is a projection of the complete logged suffix. Marginalization and the logged fair coin give $c_h+d_h\le2a_{\wh\theta,i}(x)$. With $\Delta q=\wh q-q^\st$ and $\Delta z=\wh z-z^\st$, the test-mass inequalities of Appendix~\ref{app:mass} give
