@@ -59,7 +59,7 @@ For the attained numerical reward $\widetilde b_k$, any frozen $\pi$, and its co
 \begin{equation}
  \E_{\wh\theta_k,\pi}\widetilde b_k
  \le \E_{\st,\pi} b_{\st,k}
-       +12LW\,\TV(P_{\wh\theta_k}^\rho,P_\st^\rho).
+       +6HW\,\TV(P_{\wh\theta_k}^\rho,P_\st^\rho).
  \label{eq:transfer}
 \end{equation}
 \end{proposition}
@@ -85,10 +85,10 @@ Thus we can pay for a conditional discrepancy at a randomly encountered prefix u
 \[
  LWt_\pi+2W\sum_h(t_{D_h^u}+t_{D_h^w})
 \]
-on the total transfer cost. For a logged mixture, subtracting the joint densities at each value of its label and summing gives the weighted average of component TVs. Substituting the weights in \eqref{eq:rho} bounds the last display by $12LWt_\rho$. This proves \eqref{eq:transfer}.
+on the total transfer cost. Let $S_D=\sum_h(t_{D_h^u}+t_{D_h^w})$. The mixture label is observed, so $3t_\rho=t_\pi+S_D/H$. Since $L=H+1\le2H$, the transfer cost satisfies $LWt_\pi+2WS_D\le6HWt_\rho$. This proves \eqref{eq:transfer}.
 \end{proof}
 
-Put $\tau_0=\eps/8$ and $\eta=\tau_0/(24LW)$. A nonstopping round has fitted bonus value above $\tau_0$ with the stated simulation accuracy. Proposition~\ref{prop:transfer} then implies
+Put $\tau_0=\eps/8$ and $\eta=\tau_0/(12HW)$. A nonstopping round has fitted bonus value above $\tau_0$ with the stated simulation accuracy. Proposition~\ref{prop:transfer} then implies
 \begin{equation}
  \E_{\st,\pi^k}b_{\st,k}\ge\tau_0/2
  \quad\text{or}\quad

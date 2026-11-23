@@ -80,7 +80,7 @@ For each frozen controller $\nu$,
 \]
 \end{lemma}
 \begin{proof}
-We apply the local B-error decomposition of \citet[Propositions D.1--D.2]{bstable} in the reverse direction. Insert $\wh B_h\wh q_h$ between $\wh B_h q_h^\st$ and $B_h^\st q_h^\st$. The first difference propagates $\Delta q$ through a fitted continuation. The second gives $\Delta z$. Stability, \eqref{eq:drift}, and $(s+t)^2\le2s^2+2t^2$ imply at $h<H$
+We apply the local B-error decomposition of \citet[Propositions F.1--F.2]{bstable} in the reverse direction. Insert $\wh B_h\wh q_h$ between $\wh B_h q_h^\st$ and $B_h^\st q_h^\st$. The first difference propagates $\Delta q$ through a fitted continuation. The second gives $\Delta z$. Stability, \eqref{eq:drift}, and $(s+t)^2\le2s^2+2t^2$ imply at $h<H$
 \[
  G_{k,h}^2\le4\Lambda_B^2\big(Uc_h+AUd_h\big).
 \]
@@ -128,10 +128,10 @@ Jensen’s inequality gives $\E_{\st,\rho_k}G_{k,h}(\chi_h)\le\sqrt{a_{k,h}d_{k,
       \Big(\sum_h d_{k,h}\Big)^{1/2}
  \le \tfrac{\eta}{8}\Big(\sum_h d_{k,h}\Big)^{1/2}.
 \end{align*}
-It follows that $\sum_h d_{k,h}\ge64$. The trace corresponding to this number is the sum of $\tr(\Xi_{k,h}^{-1}\E_{\st,\rho_k}[\chi_h\chi_h^\top])$. Adding the new population covariances gives log-determinant growth at least $\log 2$ by \eqref{eq:detgrowth}. The empirical matrix counts individual observed training prefixes. One update of $\Xi$ adds \emph{one expected outer product per stage} for the current diagnostic. The $n_N$ repetitions have already been used to shrink the error budget in \eqref{eq:nestedenergy}; multiplying this covariance update by $n_N$ would count their effect twice. Both matrices serve only in the analysis.
+It follows that $\sum_h d_{k,h}\ge64$. The trace corresponding to this number is the sum of $\tr(\Xi_{k,h}^{-1}\E_{\st,\rho_k}[\chi_h\chi_h^\top])$. Adding the new population covariances gives log-determinant growth at least $\log(1+\sum_h d_{k,h})\ge\log 65$ by \eqref{eq:detgrowth}. The empirical matrix counts individual observed training prefixes. One update of $\Xi$ adds \emph{one expected outer product per stage} for the current diagnostic. The $n_N$ repetitions have already been used to shrink the error budget in \eqref{eq:nestedenergy}; multiplying this covariance update by $n_N$ would count their effect twice. Both matrices serve only in the analysis.
 
 \subsection{Termination and policy value}
-Over $K$ completed nonstopping rounds both determinants are nondecreasing. Since $\|\chi_h\|_2^2\le r$, their total increases from their initial ridges imply
+The training and diagnostic alternatives give increments of at least $\log 2$ and $\log 65$, respectively. Both potentials are nondecreasing over the $K$ completed nonstopping rounds. Since $\|\chi_h\|_2^2\le r$, their total increases from their initial ridges imply
 \begin{equation}
  K\log2\le rL\log(1+Km_Kr/\lambda_a)
               +rL\log(1+Kr/\lambda_b).
