@@ -1,5 +1,5 @@
 \documentclass[sigconf,nonacm]{acmart}
-\usepackage{amsmath,mathtools,array}
+\usepackage{amsmath,mathtools}
 \settopmatter{printfolios=true,printacmref=false}
 \setcopyright{none}
 \renewcommand{\shortauthors}{}
@@ -48,8 +48,6 @@ Let $P_\theta^\pi$ denote the law of the observed trajectory under model $\theta
 \[
  \max_{\pi}\max_{\theta,\theta'\in\mathcal C_k}\TV(P_\theta^\pi,P_{\theta'}^\pi).
 \]
-All-Policy Model-Estimation E2D achieves uniform trajectory accuracy for B-stable PSRs by optimizing distributions over exploration policies and output models \cite[Theorem~H.4]{bstable}. PSR-UCB plans in one fitted model with a prediction bonus and fits under constraints on the probabilities of sampled prefixes \cite{psrucb}. Table~\ref{tab:methods} compares the episode bounds and optimization steps.
-
 Our planner receives a trajectory reward $b_k$ computed from one ordinary fit $\wh\theta_k$ and the logged histories. With high probability,
 \begin{equation}
  \TV(P_\st^\pi,P_{\wh\theta_k}^\pi)
@@ -57,24 +55,6 @@ Our planner receives a trajectory reward $b_k$ computed from one ordinary fit $\
  \label{eq:intro}
 \end{equation}
 Maximizing the right side tells us when to stop. If it is large, the optimizing coefficients prescribe the tests for the next batch. Section~\ref{sec:certificate} derives the reward, \sect{sec:diagnostic} turns its coefficients into experiments, and \sect{sec:progress} counts the rounds in which either kind of information accumulates. A round can execute several test controllers between oracle calls. Policy switches and deployment batches are separate measures of adaptivity \cite{xiong}.
-
-\begin{table*}[t]
-\caption{Exploration guarantees and optimization steps. The episode column suppresses $\eps^{-2}$, likelihood complexity and logarithms apart from OMLE's operator-dependent $\iota$. Here $D$ is the largest core-test list, $d$ bounds rank throughout the E2D class, and $r$ is the rank parameter in the other rows.}
-\label{tab:methods}
-\small\centering
-\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{.17\textwidth}>{\raggedright\arraybackslash}p{.21\textwidth}>{\raggedright\arraybackslash}p{.235\textwidth}>{\raggedright\arraybackslash}p{.32\textwidth}@{}}
-\toprule
-Method & Target and condition & Episode upper bound & Optimization and frequency\\
-\midrule
-OMLE \cite[Thm.~9]{bstable} & Known-reward policy, B-stability & $rAU\Lambda_B^2 H^2\iota$ & One optimistic model--policy search per $H$ episodes.\\
-All-Policy E2D \cite[Thm.~H.4]{bstable} & Uniform TV, B-stability or weak B-stability & $dAU\Lambda_B^2 H^2$ & One minimax update over policy and model distributions per episode.\\
-PSR-UCB \cite[Thm.~1]{psrucb} & Uniform TV, signed $\ell_1$ stability & $(r+U^2H/\gamma^2)\,rD$ $\times H^3 A^2 U^4/\gamma^4$ & One prefix-constrained fit and one bonus plan per $H$ episodes.\\
-This work & Uniform TV, B-stability & $rAU^2\Lambda_B^4 H^4$ & $\softO(rH)$ calls each to ordinary MLE and single-model planning.\\
-\bottomrule
-\end{tabular}
-\Description{Comparison of learning targets, structural assumptions, episode bounds and optimization frequency.}
-\end{table*}
 
 \section{Setting and computational access}\label{sec:setting}
 The horizon is $H$. At stage $h$ the environment emits $o_h\in\Obs$ and the learner takes $a_h\in\A$, where both alphabets are finite and $A=|\A|$. Write $\tau_h=(o_1,a_1,\ldots,o_h,a_h)$ and $x=\tau_{h-1}$. A policy specifies $\pi_h(a\mid x,o)$ on all histories. A model $\theta$ and a policy induce a trajectory law $P_\theta^\pi$ and value $V_{\theta,R}^\pi=\E_{\theta,\pi}R(\tau_H)$ for a known observable reward $R\in[0,1]$. A star denotes the true environment.
@@ -143,6 +123,17 @@ To see the consequence of uniformity, let $\pi^\star$ be optimal under the truth
 \]
 Uniformity covers both policies in this inequality.
 
+\paragraph{Sample cost of uniform trajectory accuracy.}
+All-Policy Model-Estimation E2D obtains the guarantee in Corollary~\ref{cor:reward} by solving a minimax problem over distributions of exploration policies and output models each episode \cite[Theorem~H.4]{bstable}. Its episode bound has structural factor $dAU\Lambda_B^2H^2$, where $d$ bounds the rank of every candidate. Our bound depends on the reachable rank $r$ of the true system. At equal ranks, suppressing likelihood and logarithmic factors, our bound costs an extra factor $\Lambda_B^2UH^2$ and uses $\softO(rH)$ calls each to ordinary MLE and single-model planning. Section~\ref{sec:progress} traces the extra factor to the accuracy needed to test a fitted direction.
+
+\paragraph{Comparison with PSR-UCB.}
+PSR-UCB also plans in one fitted model. Its exploration loop alternates a prefix-constrained likelihood fit and a bonus planning step with a batch of $H$ episodes \cite{psrucb}. Our algorithm collects several episodes per stage between ordinary fits. For the signed $\ell_1$ continuation bound $\gamma^{-1}$, we may take $\Lambda_B=\sqrt U/\gamma$ since $\|v\|_1\le\sqrt U\fused v$ \cite[Appendix~D.4]{bstable}. This is the full-trajectory inequality for $m_1$ in \citet[Condition~4.3]{omle}. Our episode bound then becomes $\softO(rAU^4H^4\beta/(\gamma^4\eps^2))$. Under this parameterization, the main Theorem~1 of \citet{psrucb} states an episode bound with polynomial and likelihood factors
+\[
+ \left(r+U^2H/\gamma^2\right)
+ \frac{rD H^3 A^2 U^4\beta_{\rm UCB}}{\gamma^4\eps^2}.
+\]
+After separating the likelihood budgets, the ratio of our polynomial factor to theirs is $H/[AD(r+U^2H/\gamma^2)]$. The dimension $D$ enters our explicit cone programs; the statistical effect of enlarging the candidate class enters through $\beta$.
+
 \subsection{Exploration with ordinary MLE}
 Store a data set $\mathcal D$ of complete logged episodes, a multiset $\I_h$ of training prefixes at each stage, and the number $N_0$ of initial-core episodes. The log includes both the physical trajectory and the randomized choices used to collect it. The stage buffers can therefore be reconstructed from $\mathcal D$. The learner reevaluates the predictive features of these same histories whenever the fit changes.
 
@@ -172,16 +163,6 @@ Figure~\ref{fig:algorithm} gives the decision rule. The trajectory reward is the
 \emph{Nested diagnostic batch.} The coefficient rule and $\pi^k$ specify the controller $\rho_k$ constructed in \sect{sec:diagnostic}. In each of $n_N$ fresh episodes draw $j$ uniformly from $\{0,\ldots,H-1\}$. The cut $E_0(\rho_k)$ runs an initial uniform-core experiment. For $j\ge1$, $E_j(\rho_k)$ follows $\rho_k$ through stage $j-1$, observes $o_j$, replaces the action by a uniform one, and executes a uniform next-core string. Log the cut, choices already drawn, and new experimental choices. A scheduled choice superseded by the cut receives a null label. The diagnostic data contribute complete likelihoods. Only the designated training histories supply rows to the stage programs.
 
 A frozen round spends $(H+1)m_k+n_N$ real episodes before paying for another MLE call. The $m_k$ episodes at each training stage provide rows at that stage's roll-in distribution. The $n_N$ nested experiments constrain the law induced by the diagnostic as a whole. Appendix~\ref{app:budget} specifies these batch sizes.
-
-\paragraph{Relation to statistical rates.}
-For the uniform-TV objective of Corollary~\ref{cor:reward}, the direct comparison is All-Policy E2D \cite[Theorem~H.4]{bstable}. Its rank bound $d$ applies to every candidate. Our $r$ bounds the span of reachable predictions in the true system. At matched ranks and after separating likelihood and logarithmic factors, our episode upper bound has an additional factor $\Lambda_B^2 U H^2$. Section~\ref{sec:progress} traces it to the accuracy needed to test a fitted direction. For the known-reward objective, the OMLE bound in \citet[Theorem~9]{bstable} also includes a logarithm involving the true one-step operator norm. The original OMLE guarantee \cite[Theorem~4.5]{omle} expresses the structural dependence as a polynomial.
-
-For the signed $\ell_1$ continuation bound $\gamma^{-1}$, we may take $\Lambda_B=\sqrt U/\gamma$ since $\|v\|_1\le\sqrt U\fused v$ \cite[Appendix~D.4]{bstable}. This is the full-trajectory inequality for $m_1$ in \citet[Condition~4.3]{omle}. Our episode bound then becomes $\softO(rAU^4H^4\beta/(\gamma^4\eps^2))$. Under this parameterization, the main Theorem~1 of \citet{psrucb} states an episode bound with polynomial and likelihood factors
-\[
- \left(r+U^2H/\gamma^2\right)
- \frac{rD H^3 A^2 U^4\beta_{\rm UCB}}{\gamma^4\eps^2}.
-\]
-After separating the likelihood budgets, the ratio of our polynomial factor to theirs is $H/[AD(r+U^2H/\gamma^2)]$. The dimension $D$ enters our explicit cone programs; the statistical effect of enlarging the candidate class enters through $\beta$.
 
 \input{overview}
 \input{certificate}
