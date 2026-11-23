@@ -35,7 +35,7 @@ How can a learner decide whether to trust a single maximum likelihood fit of a p
 \maketitle
 
 \section{Introduction}
-Suppose we want to explore a partially observed system today and use what we learn to plan for a reward specified tomorrow. Which observations should we collect? Data from a policy that performs the current task well may tell us little about what would happen under a different choice of actions. A natural exploration goal is therefore to learn a model that predicts the distribution of observations and actions under every policy. Once the model has this property, a planner can use it for any bounded reward on the observed trajectory. We ask how many times the learner must fit a model and call a planner to obtain this guarantee.
+In reward-free exploration, the learner collects data before it knows which reward it will be asked to optimize. For a partially observed system, predicting what happens under the policies used for data collection leaves open what would happen after a different sequence of actions. A model that predicts the trajectory law under every policy supports planning for any subsequent bounded reward on the observed trajectory. How often must a learner estimate the model and call a planner to obtain this uniform guarantee?
 
 Reward-free Optimistic Maximum Likelihood Estimation (OMLE) gives a useful starting point \cite[Algorithm~2]{omle}. Let $P_\theta^\pi$ denote the trajectory law under model $\theta$ and policy $\pi$. After collecting a batch of data, OMLE retains a set $\mathcal C_k$ of models consistent with the data and selects an exploration policy by solving
 \[
@@ -44,24 +44,23 @@ Reward-free Optimistic Maximum Likelihood Estimation (OMLE) gives a useful start
 \]
 The two models give competing predictions. The policy specifies how to act so that the difference becomes observable. This optimization couples the choice of policy to a search over pairs of models. An ordinary maximum likelihood estimator returns a single fit. A planner supplied with that fit can maximize the expectation of a given reward, but what reward would direct it toward an experiment on which the fit might be wrong?
 
-We study this question for predictive state representations (PSRs) \cite{littman,singh}. A PSR describes the state after a history by the probabilities of future tests. Each test prescribes a sequence of actions and specifies an observation sequence to watch for. This makes a prediction available in two forms. The learner can compute its probability in the fitted model, and it can carry out the experiment in the environment. We use this correspondence to construct an exploration reward from one fit and the past data. A small maximum reward certifies the accuracy of the fit. A large reward identifies experiments to run before fitting again.
+We study this question for predictive state representations (PSRs) \cite{littman,singh}. A PSR describes the state after a history by the probabilities of future tests. Each test prescribes a sequence of actions and specifies an observation sequence to watch for. This makes a prediction available in two forms. The learner can compute its probability in the fitted model, and it can carry out the experiment in the environment. We use this correspondence to construct an exploration reward from one fit and the past data. Planning for this reward either certifies the fit or supplies a test to run before the next update. Although a new fit can assign different predictions to every stored history, the evidence from these tests accumulates across fits. For the B-stable model classes described below, this yields $\softO(rH)$ calls each to ordinary MLE and single-model planning, where $r$ is the true reachable rank and $H$ the horizon.
 
-\subsection{Main result}
+\subsection{Overview of results}
 Consider a finite realizable class of PSRs with common known core tests and a uniform B-stability bound \cite{bstable}. The core tests supply predictive coordinates. B-stability controls how an error in those coordinates propagates into predictions about the rest of the episode. Write $r$ for the maximum, over stages, of the dimension spanned by reachable predictive states in the true system, and $H$ for the horizon. One oracle fits a model by ordinary MLE on the complete episode logs. The other plans for a bounded trajectory reward in a single specified model.
 
-Under the access assumptions in Section~\ref{sec:setting}, our algorithm uses $\softO(rH)$ calls to each routine. With probability at least $1-\delta$, its final fit $\widehat\theta$ satisfies
+Theorem~\ref{thm:main} and Corollary~\ref{cor:reward} give simultaneous guarantees on interaction, computation, and model accuracy under the access assumptions in Section~\ref{sec:setting}. With probability at least $1-\delta$, the final fit $\widehat\theta$ satisfies
 \[
              \sup_\pi\TV(P_\st^\pi,P_{\widehat\theta}^\pi)\le\eps/4,
 \]
-where $\star$ denotes the true system. Given any subsequent observable reward in $[0,1]$, one planning call in that fit yields an $\eps$-optimal policy. The number of episodes in the environment is
+where $\star$ denotes the true system. Given any subsequent observable reward in $[0,1]$, one planning call in that fit yields an $\eps$-optimal policy. Exploration uses $\softO(rH)$ calls to each oracle and at most
 \[
-       \softO\!\left(r A U^2\Lambda_B^4 H^4\beta/\eps^2\right),
+       \softO\!\left(r A U^2\Lambda_B^4 H^4\beta/\eps^2\right)
 \]
-where $A$ is the number of actions, $U$ the largest number of distinct core action strings at any stage, $\Lambda_B$ the stability bound, and $\beta$ the likelihood budget defined in \eqref{eq:params}. Thus each fit can be reused to collect the larger batches required at higher accuracy. The number of calls to either routine depends on accuracy only through logarithms.
+episodes in the environment. Here $A$ is the number of actions, $U$ the largest number of distinct core action strings at any stage, $\Lambda_B$ the stability bound, and $\beta$ the likelihood budget defined in \eqref{eq:params}. Thus each fit can be reused to collect the larger batches required at higher accuracy. The number of calls to either routine depends on accuracy only through logarithms.
 
-All-Policy Model-Estimation E2D already achieves uniform trajectory accuracy for B-stable PSRs through minimax optimization over distributions of exploration policies and output models \cite[Theorem~H.4]{bstable}. At matched ranks, our episode upper bound incurs an additional factor $\Lambda_B^2UH^2$, up to logarithmic and likelihood factors. PSR-UCB plans with a bonus in a single model and refits under constraints on the probabilities of sampled prefixes \cite{psrucb}. Our result gives a bound on the total number of ordinary fits and planning calls by collecting evidence in batches between updates. Section~\ref{sec:algorithm} gives the quantitative comparisons under their respective structural assumptions.
-
-\subsection{How one fit guides exploration}
+\subsection{Technical contributions}
+\paragraph{An executable certificate from one fit.}
 At round $k$, consider a policy $\pi$ that the learner could execute in its current fit $\wh\theta_k$. At each history along a trajectory, we look for a linear combination of fitted test predictions that takes a large value there while its squared values on earlier training histories have a small sum. The predictions include both tests starting at the current stage and tests following one more observation and action. These two kinds of predictions let us detect an error in the current predictive state or in its update. Summing the resulting stage values, together with a term for the initial prediction, gives a trajectory reward $b_k$ satisfying, simultaneously for all policies with high probability,
 \begin{equation}
  \TV(P_\st^\pi,P_{\wh\theta_k}^\pi)
@@ -72,12 +71,20 @@ The right side is a planning objective in the fitted model. To see why it bounds
 
 If planning returns a large value, the policy tells us which histories to visit. The maximizing coefficients tell us what to do on arrival. For example, if the coefficient selects the probability of success under action $a$, taking $a$ and recording the success indicator measures that prediction directly. More generally, Section~\ref{sec:diagnostic} turns a signed combination of predictions into a randomized test with a bounded observable score. The learner freezes the test rule for the batch, so the model and the environment assign predictions to exactly the same experiment.
 
-\subsection{Why progress survives a change of model}
+\paragraph{Counting progress across model updates.}
+The certificate chooses a test using the current fit. Bounding the number of future updates requires understanding what evidence that test leaves when the fit changes.
 Consider the system in Section~\ref{sec:example}. A job arrives with a positive or negative cue. The agent chooses a station, sees the same ready signal at either station, and selects processing mode $a$ or $b$. Two candidate models give the same trajectory law to any policy that always uses $b$. After a negative cue and a turn to the right station, however, one predicts certain success under $a$ and the other predicts certain failure. Switching the fit changes this coordinate from one to zero even for a history the learner has already stored. A direction that looks new in round $k$ may disappear when the learner recomputes the features in round $k+1$. This is the obstacle to bounding the number of refits by counting directions in successive fitted models.
 
 To count progress, we ask what would give the selected test a large expected score in the environment. If the score remains large when evaluated on true predictions relative to past coverage, the training batch adds coverage in the true predictive space. If the fitted score is large while true coverage already explains the histories visited, the model and the environment must disagree on the law of the diagnostic experiment. In the example, always finishing in mode $b$ would conceal this disagreement, even on repeated visits to the right station. Testing mode $a$ makes it observable. For a general diagnostic, the learner interrupts it at a randomly chosen stage and samples a local prediction there. Its record enters the likelihood of every subsequent fit.
 
 The proof keeps two accounts of progress in the same fixed space. One records the true predictive states at sampled training histories. The other records their second moments under the diagnostic policies, where past likelihoods constrain the prediction errors of later fits. Each round that calls for more exploration increases at least one of the associated log determinants by a constant. At each of the $H$ stages these matrices have dimension at most $r$, so their total growth bounds the number of such rounds by $\softO(rH)$ (Section~\ref{sec:progress}).
+
+\subsection{Related work}
+\paragraph{Reward-free model estimation.}
+Reward-free OMLE shows how a likelihood confidence set can certify a model for subsequent planning \cite[Theorem~7.2]{omle}. For B-stable PSRs, All-Policy Model-Estimation E2D gives a sample bound for the same uniform trajectory guarantee as Corollary~\ref{cor:reward} \cite[Theorem~H.4]{bstable}. Its exploration step solves a minimax problem over distributions of policies and output models. At matched ranks, suppressing likelihood and logarithmic factors, our episode upper bound carries an additional factor $\Lambda_B^2 U H^2$. Our algorithm uses one ordinary fit and one single-model exploration plan to guide an entire batch of experiments.
+
+\paragraph{Planning in a fitted PSR.}
+PSR-UCB also builds a bonus for planning in a single model \cite{psrucb}. It fits that model subject to constraints on the probabilities of sampled prefixes and refreshes the fit and plan after each batch of $H$ episodes. In our algorithm, a large bonus specifies the test that collects the next batch of evidence. Bounding the number of such batches gives the total oracle-call guarantee for ordinary fits. Section~\ref{sec:algorithm} compares the episode bounds under a common parameterization of stability.
 
 \section{Setting and computational access}\label{sec:setting}
 The horizon is $H$. At stage $h$ the environment emits $o_h\in\Obs$ and the learner takes $a_h\in\A$, where both alphabets are finite and $A=|\A|$. Write $\tau_h=(o_1,a_1,\ldots,o_h,a_h)$ and $x=\tau_{h-1}$. A policy specifies $\pi_h(a\mid x,o)$ on all histories. A model $\theta$ and a policy induce a trajectory law $P_\theta^\pi$ and value $V_{\theta,R}^\pi=\E_{\theta,\pi}R(\tau_H)$ for a known observable reward $R\in[0,1]$. A star denotes the true environment.
