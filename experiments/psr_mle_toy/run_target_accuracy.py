@@ -17,6 +17,8 @@ CONFIGS = {
     "omle": ("reward_free_omle", 2),
     "ours": ("fitted_psr", 8),
     "omle_matched": ("reward_free_omle", 8),
+    "uniform": ("random_test", 8),
+    "count": ("count_test", 8),
 }
 
 

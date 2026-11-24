@@ -9,7 +9,10 @@ from routing import (
     run_algorithm, stage_two, vector,
 )
 
-METHODS = ("bonus_test", "random_test", "bonus_no_test", "fitted_psr", "reward_free_omle")
+METHODS = (
+    "bonus_test", "random_test", "count_test", "bonus_no_test",
+    "fitted_psr", "reward_free_omle",
+)
 
 
 def disagreement_policy(models):
@@ -24,6 +27,17 @@ def disagreement_policy(models):
         routes.append(float(route == "R"))
         modes[PREFIXES.index((cue, route))] = float(mode == "a")
     return Design(tuple(routes), tuple(modes))
+
+
+def count_exploration(counts):
+    """Freeze a policy uniform over each cue's least tried route-mode pairs."""
+    visits = counts.reshape(len(CUES), len(ROUTES), len(MODES), 2).sum(axis=-1)
+    selected = visits == visits.min(axis=(1, 2), keepdims=True)
+    route_mass = selected.sum(axis=2)
+    right = tuple(route_mass[:, 1] / route_mass.sum(axis=1))
+    testing = np.divide(selected[:, :, 0], route_mass, out=np.zeros_like(route_mass, dtype=float),
+                        where=route_mass > 0)
+    return right, tuple(testing.ravel())
 
 
 def compare(models, truth_index, method, seed, episodes=256, batch=8, *, omle_update_every=2):
@@ -87,19 +101,22 @@ def compare(models, truth_index, method, seed, episodes=256, batch=8, *, omle_up
             else:
                 if method == "random_test":
                     routes = (0.5, 0.5)
+                    tests = (0.5,) * len(PREFIXES)
+                elif method == "count_test":
+                    routes, tests = count_exploration(counts)
                 else:
                     model = models[fit]
                     support = stage_two(model, history, energy=1.0)
                     routes = tuple(float(support(vector(model.p(cue, "R", "a")))[0]
                                          > support(vector(model.p(cue, "L", "a")))[0] + 1e-12)
                                    for cue in CUES)
-                test = 0.0 if method == "bonus_no_test" else 0.5
+                    tests = (0.0 if method == "bonus_no_test" else 0.5,) * len(PREFIXES)
                 # Shared uniforms pair the control arms, including when they
                 # choose different actions and observe different outcomes.
                 for u, v, w, z in rng.random((batch, 4)):
                     cue_i = int(u < 0.5)
                     route_i = int(v < routes[cue_i])
-                    mode_i = int(w >= test)
+                    mode_i = int(w >= tests[cue_i * len(ROUTES) + route_i])
                     cue, route, mode = CUES[cue_i], ROUTES[route_i], MODES[mode_i]
                     y = int(z < truth.p(cue, route, mode))
                     counts[((cue_i * 2 + route_i) * 2 + mode_i) * 2 + y] += 1

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from compare import compare, disagreement_policy
+from compare import compare, count_exploration, disagreement_policy
 from rank_sweep import reachable_ranks, run_rank_case, transition
 from routing import (
     EPISODES, PREFIXES, Design, RoutingModel, Support, all_policy_tv, diagnostic,
@@ -51,6 +51,14 @@ class RoutingTests(unittest.TestCase):
         rho = diagnostic(policy, queries)
         self.assertAlmostEqual(distance(law(first, rho), law(second, rho)), 0)
         self.assertGreater(hellinger(law(first, nested(rho)), law(second, nested(rho))), 0)
+
+    def test_count_exploration_preserves_route_and_mode_pairing(self):
+        # For the negative cue, only (L, a) and (R, b) have minimum count.
+        # Independent uniform action marginals would also sample the other two.
+        counts = np.repeat([0, 1, 1, 0, 0, 0, 0, 0], 2)
+        right, test = count_exploration(counts)
+        self.assertEqual(right, (0.5, 0.5))
+        self.assertEqual(test, (1.0, 0.0, 0.5, 0.5))
 
     def test_suite_contracts(self):
         models = [RoutingModel(0), RoutingModel(1)]

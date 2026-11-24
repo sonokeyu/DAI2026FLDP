@@ -11,7 +11,7 @@ from statistics import mean, median
 
 import numpy as np
 
-from compare import METHODS, compare
+from compare import compare
 from rank_sweep import run_rank_case
 from routing import RoutingModel, run_algorithm
 
@@ -32,7 +32,9 @@ def csv(path, rows):
 def comparison(seeds):
     raw = []
     groups = defaultdict(list)
-    for gap, truth, method, seed in product((0.1, 0.3, 0.6), (0, 1), METHODS, range(seeds)):
+    # Preserve the methods in the original 256-episode suite.
+    methods = ("bonus_test", "random_test", "bonus_no_test", "fitted_psr", "reward_free_omle")
+    for gap, truth, method, seed in product((0.1, 0.3, 0.6), (0, 1), methods, range(seeds)):
         models = [RoutingModel(0.2), RoutingModel(0.2 + gap)]
         for row in compare(models, truth, method, seed):
             key = dict(gap=gap, truth=truth, method=method)

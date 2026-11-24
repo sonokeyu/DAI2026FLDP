@@ -120,6 +120,47 @@ latexmk -pdf -outdir=reproduced reproduced/target_accuracy.tex
 [Cost figure](results/target_accuracy.pdf) · [Target costs](results/target_summary.csv) · [TV curves](results/target_curves.csv) · [Per-seed trajectories](results/target_runs.csv.gz)
 
 
+## Traditional exploration baselines
+
+**uniform** chooses route and processing mode independently and uniformly.
+**count** uses the cumulative visit count of each route and mode pair for
+the observed cue. At the start of each block it freezes a policy that draws
+uniformly among that cue's least visited pairs. Each update fits the same
+two-candidate class by ordinary MLE. Both methods use the same 100 seeds,
+two truth orientations, eight-episode update interval, and 1,024-episode cap
+as **ours**. The plot also includes **omle** at that same interval. Costs
+use the sustained mean TV criterion above.
+
+Cost in episodes / updates at a mean TV of **0.010**:
+
+| Gap | omle | ours | uniform | count |
+| --- | ---: | ---: | ---: | ---: |
+| 0.1 | 208 / 26 | 1,008 / 126 | 440 / 55 | 400 / 50 |
+| 0.3 | 88 / 11 | 416 / 52 | 224 / 28 | 216 / 27 |
+| 0.6 | 56 / 7 | 136 / 17 | 80 / 10 | 56 / 7 |
+
+Both traditional baselines reach 0.010 with fewer episodes and updates
+than **ours** at each gap. At Δ = 0.1 and episode 256, the mean counts
+of the distinguishing combination are 14.44 for **ours**, 31.81 for
+**uniform**, and 32.09 for **count**. In the hardest case at TV 0.005,
+**count** reaches
+the target at episode 952 in the observed mean. **uniform** and **ours**
+miss it at the cap. The upper bootstrap bound for that **count** result
+also runs past the cap, so the exact crossing cost is uncertain.
+**Count** has lower cost than **uniform** at 0.010 across the three gaps,
+though their ordering varies across the other targets.
+
+Generate the added figure from the same expanded target results.
+
+```sh
+python -B run_target_accuracy.py --output reproduced
+python -B plot_baselines.py reproduced/target_summary.csv reproduced/traditional_baselines.tex
+latexmk -pdf -outdir=reproduced reproduced/traditional_baselines.tex
+```
+
+[Same interval comparison figure](results/traditional_baselines.pdf) · [All five configurations](results/target_summary.csv)
+
+
 ## Stopping and nested diagnostics
 
 On the three-stage environment, all stage supports are solved by finite
