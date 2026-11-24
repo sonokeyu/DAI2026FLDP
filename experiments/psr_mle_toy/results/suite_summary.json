@@ -1,0 +1,31 @@
+{
+  "resized_nested": {
+    "runs": 240,
+    "stops": 240,
+    "false_stops": 0,
+    "uncalibrated_rounds": 0,
+    "median_calls": 13.0,
+    "median_episodes": 3840000.0
+  },
+  "resized_direct": {
+    "runs": 240,
+    "stops": 240,
+    "false_stops": 0,
+    "uncalibrated_rounds": 0,
+    "median_calls": 13.0,
+    "median_episodes": 3840000.0
+  },
+  "appendix_nested": {
+    "runs": 240,
+    "stops": 240,
+    "false_stops": 0,
+    "uncalibrated_rounds": 0,
+    "median_calls": 3.0,
+    "median_episodes": 273694893490.0
+  },
+  "rank": {
+    "runs": 540,
+    "stops": 540,
+    "false_stops": 0
+  }
+}

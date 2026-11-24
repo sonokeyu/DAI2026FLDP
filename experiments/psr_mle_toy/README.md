@@ -1,5 +1,8 @@
 # Three-stage PSR MLE toy experiment
 
+The expanded suite, full three-stage implementation, reward-free OMLE
+comparison, and rank sweep are described in [RESULTS.md](RESULTS.md).
+
 This is a dependency-free experiment for the **Section 4 mechanism** in
 *Learning Predictive State Representations with Ordinary Maximum Likelihood
 and Model Planning*. Run from this directory with Python 3.9 or newer:
