@@ -1,0 +1,108 @@
+\documentclass[border=8pt]{standalone}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\renewcommand{\familydefault}{\sfdefault}
+\definecolor{oursline}{HTML}{00747C}
+\definecolor{omleline}{HTML}{773588}
+\definecolor{ink}{HTML}{17242D}
+\definecolor{muted}{HTML}{4A5C67}
+\definecolor{gridline}{HTML}{E3EAED}
+\begin{document}
+\begin{tikzpicture}[text=ink]
+\begin{groupplot}[
+  group style={group size=2 by 1,horizontal sep=1.3cm},
+  width=7.3cm,height=7.3cm,scale only axis,
+  clip=false,
+  xmode=log,log basis x=2,
+  ymin=0.4,ymax=11.0,
+  tick align=outside,tick style={muted!75},
+  tick label style={font=\footnotesize,text=muted},
+  label style={font=\small,text=ink},
+  title style={font=\small\bfseries,text=ink,yshift=1mm},
+  grid=major,grid style={gridline},
+  axis lines*=left,axis line style={muted!80},
+  log ticks with fixed point,
+]
+\nextgroupplot[title={Model updates},xmin=0.9,xmax=896,ytick={10.40,9.40,8.40,6.70,5.70,4.70,3.00,2.00,1.00},xtick={1,2,4,8,16,32,64,128,256,512},xticklabels={1,2,4,8,16,32,64,128,256,512},yticklabels={{$\Delta=0.1$\quad 0.020},{$\Delta=0.1$\quad 0.010},{$\Delta=0.1$\quad 0.005},{$\Delta=0.3$\quad 0.020},{$\Delta=0.3$\quad 0.010},{$\Delta=0.3$\quad 0.005},{$\Delta=0.6$\quad 0.020},{$\Delta=0.6$\quad 0.010},{$\Delta=0.6$\quad 0.005}},ylabel={Gap and target TV}]
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(12,10.540)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:12,10.540) {12};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(13,10.260)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:13,10.260) {13};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(104,9.540)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:104,9.540) {104};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(126,9.260)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:126,9.260) {126};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(336,8.540)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:336,8.540) {336};
+\addplot[only marks,mark=triangle,mark size=2pt,oursline] coordinates {(128,8.260)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:128,8.260) {$>{}128$};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(24,6.840)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:24,6.840) {24};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(26,6.560)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:26,6.560) {26};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(44,5.840)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:44,5.840) {44};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(52,5.560)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:52,5.560) {52};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(56,4.840)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:56,4.840) {56};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(85,4.560)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:85,4.560) {85};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(16,3.140)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:16,3.140) {16};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(15,2.860)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:15,2.860) {15};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(28,2.140)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:28,2.140) {28};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(17,1.860)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:17,1.860) {17};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(28,1.140)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:28,1.140) {28};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(20,0.860)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:20,0.860) {20};
+\nextgroupplot[title={Environment episodes},xmin=7.2,xmax=1792,ytick={10.40,9.40,8.40,6.70,5.70,4.70,3.00,2.00,1.00},xtick={8,16,32,64,128,256,512,1024},xticklabels={8,16,32,64,128,256,512,1024},yticklabels={}]
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(24,10.540)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:24,10.540) {24};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(104,10.260)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:104,10.260) {104};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(208,9.540)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:208,9.540) {208};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(1008,9.260)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:1008,9.260) {1008};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(672,8.540)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:672,8.540) {672};
+\addplot[only marks,mark=triangle,mark size=2pt,oursline] coordinates {(1024,8.260)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:1024,8.260) {$>{}1024$};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(48,6.840)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:48,6.840) {48};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(208,6.560)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:208,6.560) {208};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(88,5.840)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:88,5.840) {88};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(416,5.560)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:416,5.560) {416};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(112,4.840)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:112,4.840) {112};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(680,4.560)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:680,4.560) {680};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(32,3.140)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:32,3.140) {32};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(120,2.860)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:120,2.860) {120};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(56,2.140)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:56,2.140) {56};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(136,1.860)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:136,1.860) {136};
+\addplot[only marks,mark=o,mark size=2pt,omleline] coordinates {(56,1.140)};
+\node[anchor=west,font=\scriptsize,text=omleline] at (axis cs:56,1.140) {56};
+\addplot[only marks,mark=square*,mark size=2pt,oursline] coordinates {(160,0.860)};
+\node[anchor=west,font=\scriptsize,text=oursline] at (axis cs:160,0.860) {160};
+\end{groupplot}
+\node[anchor=west,inner sep=0pt,font=\bfseries\Large] at ([yshift=26mm]group c1r1.north west) {Cost to reach the same mean TV};
+\node[anchor=west,inner sep=0pt,text=muted,font=\small] at ([yshift=19mm]group c1r1.north west) {First checkpoint that stays at or below target through episode 1024.};
+\node[anchor=west,font=\small,text=omleline] at ([xshift=-1mm,yshift=11mm]group c1r1.north west) {$\circ$\enspace\textbf{omle}};
+\node[anchor=west,font=\small,text=oursline] at ([xshift=22mm,yshift=11mm]group c1r1.north west) {\rule{4pt}{4pt}\enspace\textbf{ours}};
+\node[anchor=west,font=\footnotesize,text=muted] at ([xshift=44mm,yshift=11mm]group c1r1.north west) {$>$ indicates a target was not reached by the budget cap.};
+\end{tikzpicture}
+\end{document}

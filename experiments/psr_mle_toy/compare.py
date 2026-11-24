@@ -26,10 +26,14 @@ def disagreement_policy(models):
     return Design(tuple(routes), tuple(modes))
 
 
-def compare(models, truth_index, method, seed, episodes=256, batch=8):
+def compare(models, truth_index, method, seed, episodes=256, batch=8, *, omle_update_every=2):
     """Learn on a fixed budget, with results at multiples of batch."""
     if method not in METHODS or batch < 2 or batch % 2 or episodes % batch:
         raise ValueError("use a known method and an even batch dividing episodes")
+    if method == "reward_free_omle" and (
+        omle_update_every < 2 or omle_update_every % 2 or batch % omle_update_every
+    ):
+        raise ValueError("OMLE update interval must be even and divide the checkpoint interval")
     if method == "fitted_psr":
         return [dict(episodes=row["episodes"], fit=row["fit"], policy_tv=row["policy_tv"],
                      updates=row["mle_calls"] - 1, candidates=len(models),
@@ -47,8 +51,9 @@ def compare(models, truth_index, method, seed, episodes=256, batch=8):
     slack = log(episodes * len(models) / 0.1)
     results = []
     updates = 0
+    omle_laws = {}
     for n in range(0, episodes + 1, batch):
-        for offset in range(0, batch, 2 if method == "reward_free_omle" else batch):
+        for offset in range(0, batch, omle_update_every if method == "reward_free_omle" else batch):
             occupied = counts > 0
             scores = log_models[:, occupied] @ counts[occupied]
             if method == "reward_free_omle":
@@ -69,12 +74,16 @@ def compare(models, truth_index, method, seed, episodes=256, batch=8):
                 return results
             if method == "reward_free_omle":
                 policy = disagreement_policy([model for model, active in zip(models, present) if active])
-                # Eq. (10): one episode for each of the two stage cuts.
+                # Eq. (10): one episode per stage cut, repeated under the
+                # frozen policy when testing a longer update interval.
                 # The h=1 cut forces the stage-two core, action a.
-                for design in (Design((0.5, 0.5), (1.0,) * 4),
-                               Design(policy.routes, (0.5,) * 4)):
-                    p = law(truth, mix(design)).ravel()
-                    counts[rng.choice(len(p), p=p)] += 1
+                if policy.routes not in omle_laws:
+                    designs = (Design((0.5, 0.5), (1.0,) * 4),
+                               Design(policy.routes, (0.5,) * 4))
+                    omle_laws[policy.routes] = [law(truth, mix(d)).ravel() for d in designs]
+                for _ in range(omle_update_every // 2):
+                    for p in omle_laws[policy.routes]:
+                        counts[rng.choice(len(p), p=p)] += 1
             else:
                 if method == "random_test":
                     routes = (0.5, 0.5)

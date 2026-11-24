@@ -65,6 +65,61 @@ planning call do different work.
 
 [Figure](results/comparison.pdf) · [Curves and paired bootstrap intervals](results/comparison_summary.csv) · [Per-seed trajectories](results/comparison_runs.csv.gz)
 
+## Fixed TV targets
+
+We reran the two main methods for up to 1,024 episodes, with 100 seeds and
+both choices of the true model for each gap. At every eight episodes, we
+measure mean worst-policy TV over those 200 runs. For each target
+(0.020, 0.010, and 0.005), the reported cost is the first checkpoint at
+which the mean is at or below the target and stays there through episode
+1,024. This retrospective measure excludes temporary crossings. It uses
+truth only to evaluate the recorded runs. A model update counts a
+post-batch refit or confidence-set update. The two operations have different
+computational costs.
+
+The primary comparison retains the original update intervals of two
+episodes for **omle** and eight episodes for **ours**. The sensitivity
+check also runs **omle** with frozen exploration for eight episodes per
+update. All OMLE conditions use the 1,024-episode horizon in their
+likelihood slack. The fixed-budget diagnostic design for **ours** is the
+same as in the 256-episode experiment.
+
+Costs at a sustained mean TV of **0.010**:
+
+| Gap | omle episodes / updates | ours episodes / updates | omle at matched interval |
+| --- | ---: | ---: | ---: |
+| 0.1 | 208 / 104 | 1,008 / 126 | 208 / 26 |
+| 0.3 | 88 / 44 | 416 / 52 | 88 / 11 |
+| 0.6 | 56 / 28 | 136 / 17 | 56 / 7 |
+
+At the hardest gap, the **ours** result for 0.010 is at the budget boundary:
+the mean at episode 1,024 is exactly 0.010, and only 53.6% of the paired
+bootstrap draws reach the target within budget. The run-level aggregate
+for **ours** misses 0.005 at that gap.
+
+With the original update intervals, **ours** uses fewer updates on the
+three targets at Δ = 0.6 and more updates in the other five cells in which
+both methods reach the target. It uses more episodes in every comparable
+cell. Matching the update interval leaves the **omle** checkpoint mean TV
+curves unchanged in this toy experiment, so **omle** uses fewer episodes
+and updates in each reachable comparison. These results quantify the costs
+of this routing experiment under the selected update schedules.
+
+The figure shows the primary two-method comparison. It marks a miss at
+the applicable budget cap. The CSV includes the same-interval control and
+marginal percentile bootstrap intervals for the episode count. Resampling
+pairs both truth orientations by seed. An empty upper bound indicates the
+corresponding percentile did not reach the target by the cap.
+
+```sh
+python -B run_target_accuracy.py --output reproduced
+python -B plot_target_accuracy.py reproduced/target_summary.csv reproduced/target_accuracy.tex
+latexmk -pdf -outdir=reproduced reproduced/target_accuracy.tex
+```
+
+[Cost figure](results/target_accuracy.pdf) · [Target costs](results/target_summary.csv) · [TV curves](results/target_curves.csv) · [Per-seed trajectories](results/target_runs.csv.gz)
+
+
 ## Stopping and nested diagnostics
 
 On the three-stage environment, all stage supports are solved by finite
