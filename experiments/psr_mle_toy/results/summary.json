@@ -1,0 +1,41 @@
+{
+  "exact_checks": {
+    "hidden_task_policy_tv": 0.0,
+    "max_policy_tv": 0.5,
+    "revealing_test_policy_tv": 0.5,
+    "specified_nested_branch_hellinger_contribution": 0.027777777777777776,
+    "stage_two_unseen_support": 2.0,
+    "true_optimal_reward": 0.75
+  },
+  "monte_carlo": {
+    "passive": {
+      "false_stage_two_stop_fraction": 1,
+      "fit_true_fraction": 0,
+      "mean_diagnostic_tests": 0,
+      "mean_episodes": 64,
+      "mean_final_max_policy_tv": 0.5,
+      "mean_mle_calls": 5,
+      "mean_task_regret": 0.25,
+      "seeds": 100,
+      "stopped_fraction": 1
+    },
+    "stage_two_test": {
+      "false_stage_two_stop_fraction": 0,
+      "fit_true_fraction": 1,
+      "mean_diagnostic_tests": 32.17,
+      "mean_episodes": 64.16,
+      "mean_final_max_policy_tv": 0.0,
+      "mean_mle_calls": 5.01,
+      "mean_task_regret": 0.0,
+      "seeds": 100,
+      "stopped_fraction": 1
+    }
+  },
+  "parameters": {
+    "batch_size": 16,
+    "energy_budget": 1.0,
+    "max_rounds": 20,
+    "seeds": 100,
+    "threshold": 0.2
+  }
+}
