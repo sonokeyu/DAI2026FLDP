@@ -129,6 +129,23 @@ instrumentation grows sharply with the number of unresolved coordinates
 scores model pairs. These measurements concern this factorized optimizer and
 should not be read as wall-clock speedups for general solvers.
 
+## Complete PSR loop with multiple uncertain branches
+
+[`full_psr_multicoordinate_summary.csv`](results/full_psr_multicoordinate/full_psr_multicoordinate_summary.csv)
+records the complete fitted-PSR algorithm on four uncertain terminal branches
+of the three-stage routing system. The finite MLE class has 16 models with
+branch probabilities 0.2 or 0.4. In the realizable condition, 100/100 runs
+stopped with exact worst-policy TV zero at each of epsilon 0.2 and 0.1. Both
+settings used a median of 133 MLE calls and 133 exploration-planning calls.
+Median episode costs were 33 million and 132 million, respectively.
+
+The continuous-truth condition draws each branch probability independently
+from [0.2, 0.4] while retaining the finite endpoint class for fitting. It is
+deliberately misspecified. All 200 runs stopped, while median TV was 0.0688
+and the 90th percentile was 0.0882. Only 15% of epsilon 0.2 runs and 1% of
+epsilon 0.1 runs met the epsilon/4 target. The run data and reproduction
+command are in [`EXPERIMENTS.md`](EXPERIMENTS.md).
+
 Reproduce these runs with:
 
 ```sh

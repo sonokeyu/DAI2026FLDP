@@ -1,0 +1,5 @@
+condition,epsilon,runs,stop_rate,median_tv,p90_tv,within_target,median_episodes,median_mle_calls,median_planning_calls
+realizable,0.2,100,1,0.0,0.0,1,33000000.0,133.0,133.0
+realizable,0.1,100,1,0.0,0.0,1,132000000.0,133.0,133.0
+continuous_truth,0.2,100,1,0.06877609385575038,0.08821959635951654,0.15,33000000.0,133.0,133.0
+continuous_truth,0.1,100,1,0.06877609385575038,0.08821959635951654,0.01,132000000.0,133.0,133.0

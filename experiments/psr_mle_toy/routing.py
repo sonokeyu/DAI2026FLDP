@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from itertools import product
 from math import ceil, fsum, log, log1p, sqrt
 
@@ -42,18 +43,23 @@ class Design:
     modes: tuple[float, ...] = FIXED_MODES
 
     def kernel(self):
-        weights = []
-        for e in EPISODES:
-            right = self.routes[CUES.index(e.cue)]
-            test = self.modes[PREFIXES.index((e.cue, e.route))]
-            weights.append((right if e.route == "R" else 1 - right)
-                           * (test if e.mode == "a" else 1 - test))
-        return np.array(weights)
+        return _design_kernel(self.routes, self.modes)
 
     @classmethod
     def policy(cls, policy):
         return cls(tuple(float(r == "R") for r in policy.routes),
                    tuple(float(m == "a") for m in policy.modes))
+
+
+@lru_cache(maxsize=None)
+def _design_kernel(routes, modes):
+    weights = []
+    for e in EPISODES:
+        right = routes[CUES.index(e.cue)]
+        test = modes[PREFIXES.index((e.cue, e.route))]
+        weights.append((right if e.route == "R" else 1 - right)
+                       * (test if e.mode == "a" else 1 - test))
+    return np.array(weights)
 
 
 def mix(*designs):
@@ -309,11 +315,12 @@ def fit_mle(log_likelihoods, counts):
 
 
 def run_algorithm(models, truth_index, epsilon, seed, condition="nested",
-                  theory=False, scale=1.0, fixed_budget=None, *, fixed_training=1):
+                  theory=False, scale=1.0, fixed_budget=None, *, fixed_training=1,
+                  truth_model=None):
     """Run Algorithm 1 using exact multinomial draws for logged batch counts."""
     budget = Budget(epsilon, candidates=len(models))
     rng = np.random.default_rng(seed)
-    truth = models[truth_index]
+    truth = models[truth_index] if truth_model is None else truth_model
     models_obs = np.stack([model.observation_weights() for model in models])
     with np.errstate(divide="ignore"):
         models_log = np.log(models_obs)
@@ -366,7 +373,7 @@ def run_algorithm(models, truth_index, epsilon, seed, condition="nested",
             targeted += sum(int(leaves[i]) for i, e in enumerate(EPISODES)
                             if (e.cue, e.route, e.mode) == ("-", "R", "a"))
             for i, model in enumerate(models):
-                if i != truth_index:
+                if truth_model is not None or i != truth_index:
                     risks[i] += conditional_risk(p, law(model, components), observed, stage)
             if stage < 2:
                 histories[stage] += size

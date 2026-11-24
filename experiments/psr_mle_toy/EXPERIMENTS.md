@@ -65,6 +65,39 @@ episodes and 4,061 MLE calls. The OMLE objective's median pair-score count is
 uncertainty; `ours_batch` is a purpose-built factorized analogue, not the
 complete PSR algorithm or its Appendix D schedule.
 
+## Full PSR on multiple uncertain branches
+
+The complete Algorithm 1 loop is also run in the existing three-stage PSR
+simulator with four independently uncertain `(cue, route, mode-a)` outcome
+probabilities. The candidate class has 16 models with each branch probability
+at 0.2 or 0.4. We use the paper's fitted-model bonus, training batches, initial
+core data, nested diagnostics, and stopping rule. The appendix-independent
+batch scale is 1, as in the existing finite routing audits. Each condition has
+100 seeds. In the realizable condition, the true model is sampled from the
+candidate class. In the continuous-truth condition, each true branch
+probability is independently sampled from `[0.2, 0.4]`, while the fitted class
+retains its 0.2/0.4 grid. This intentionally violates realizability.
+
+All 200 realizable runs stopped with exact worst-policy TV zero. Median
+episodes were 33,000,000 at epsilon 0.2 and 132,000,000 at epsilon 0.1, with
+133 MLE and 133 planning calls in both settings. The continuous-truth runs
+also stopped in 133 rounds, but their median TV was 0.0688 and their 90th
+percentile was 0.0882. Only 15% and 1% of those runs, respectively, were within
+the epsilon/4 target. The fitting class cannot represent the continuous true
+probabilities, so the fitted-model bonus stopping rule does not certify the
+true-environment TV in this misspecified condition. This experiment measures
+that gap directly. It is not a theorem violation because the theorem assumes
+realizability.
+
+Reproduce with:
+
+```sh
+python3 experiments/psr_mle_toy/run_full_psr_multicoordinate.py --output experiments/psr_mle_toy/results/full_psr_multicoordinate --seeds 100 --scale 1.0
+```
+
+[Summary](results/full_psr_multicoordinate/full_psr_multicoordinate_summary.csv)
+· [Per-run results](results/full_psr_multicoordinate/full_psr_multicoordinate_runs.csv)
+
 ## Rank, horizon, and reward reuse
 
 The existing unknown-rank audit tests true ranks 1, 2, and 4, core dimension
