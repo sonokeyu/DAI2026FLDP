@@ -55,7 +55,7 @@ We study predictive state representations (PSRs), in which the state after a his
 
 In this paper, we address the computational cost of reward-free exploration through the following question.
 \begin{center}
-\itshape Can we learn a PSR that predicts trajectories accurately under every policy, with few calls to ordinary MLE and single-model planning?
+\itshape Can we learn a PSR accurate under every policy using ordinary MLE and single-model planning, with calls growing nearly as rank times horizon?
 \end{center}
 We answer this question affirmatively for finite realizable classes of uniformly B-stable PSRs. A PSR prediction describes an experiment the learner can perform. From one fit and the histories observed so far, we construct a reward whose expected value bounds the trajectory prediction error of each policy. Maximizing this reward in the fit yields either a certificate of uniform accuracy or a policy and a test to execute in the environment. A subsequent fit may assign new predictive coordinates to every stored history. We show that the information from successive tests nevertheless accumulates in the fixed predictive space of the true system. This gives a high-probability bound of $\softO(rH)$ calls each to ordinary MLE and single-model planning, where $r$ is the unknown true reachable rank.
 
