@@ -3,6 +3,10 @@
 [Theory validation](THEORY_VALIDATION.md) reports the oracle interfaces,
 call counts, and stopping certificate under the paper’s assumptions.
 
+[Baseline scope and literature](BASELINES.md) records the direct and
+traditional baselines, the PSR-UCB toy specialization, and recent related
+papers that were screened for comparability.
+
 The expanded suite, full three-stage implementation, reward-free OMLE
 comparison, and rank sweep are described in [RESULTS.md](RESULTS.md).
 

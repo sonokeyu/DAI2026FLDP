@@ -1,0 +1,51 @@
+\documentclass[border=8pt]{standalone}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\renewcommand{\familydefault}{\sfdefault}
+\definecolor{omleline}{HTML}{773588}
+\definecolor{oursline}{HTML}{00747C}
+\definecolor{ucbline}{HTML}{D06B24}
+\definecolor{ink}{HTML}{17242D}
+\definecolor{muted}{HTML}{4A5C67}
+\definecolor{gridline}{HTML}{E3EAED}
+\begin{document}
+\begin{tikzpicture}[text=ink]
+\begin{groupplot}[
+  group style={group size=2 by 1,horizontal sep=1.4cm},
+  width=7.4cm,height=5.2cm,scale only axis,
+  xmin=-.18,xmax=3.18,xtick={0,1,2,3},ymode=log,
+  axis lines*=left,axis line style={muted!80},
+  tick align=outside,tick label style={font=\footnotesize,text=muted},
+  title style={font=\small\bfseries,text=ink,yshift=1mm},
+  grid=major,grid style={gridline},xlabel={Accuracy parameter $\epsilon$},
+  clip=false,
+]
+\nextgroupplot[title={Measured optimization calls},xticklabels={0.4,0.2,0.1,0.05},ymin=1,ymax=30000,ytick={1,10,100,1000,10000}]
+\addplot[omleline,thick,mark=o,mark size=2pt] coordinates {(0,15) (1,69) (2,392) (3,973)};
+\node[anchor=south,font=\scriptsize,text=omleline] at (axis cs:0,15) {15};
+\node[anchor=south,font=\scriptsize,text=omleline] at (axis cs:1,69) {69};
+\node[anchor=south,font=\scriptsize,text=omleline] at (axis cs:2,392) {392};
+\node[anchor=south,font=\scriptsize,text=omleline] at (axis cs:3,973) {973};
+\addplot[oursline,thick,mark=square*,mark size=2pt] coordinates {(0,3) (1,3) (2,3) (3,3)};
+\node[anchor=south,font=\scriptsize,text=oursline] at (axis cs:0,3) {3};
+\node[anchor=south,font=\scriptsize,text=oursline] at (axis cs:1,3) {3};
+\node[anchor=south,font=\scriptsize,text=oursline] at (axis cs:2,3) {3};
+\node[anchor=south,font=\scriptsize,text=oursline] at (axis cs:3,3) {3};
+\addplot[ucbline,thick,mark=triangle*,mark size=2pt] coordinates {(0,337) (1,1344.5) (2,5369) (3,21442)};
+\node[anchor=south,font=\scriptsize,text=ucbline] at (axis cs:0,337) {337};
+\node[anchor=south,font=\scriptsize,text=ucbline] at (axis cs:1,1344.5) {1344.5};
+\node[anchor=south,font=\scriptsize,text=ucbline] at (axis cs:2,5369) {5369};
+\node[anchor=south,font=\scriptsize,text=ucbline] at (axis cs:3,21442) {21442};
+\nextgroupplot[title={Episodes to the common TV target},xticklabels={0.4,0.2,0.1,0.05},ymin=10,ymax=1e14,ytick={10,1e4,1e7,1e10,1e13}]
+\addplot[omleline,thick,mark=o,mark size=2pt] coordinates {(0,30) (1,138) (2,784) (3,1946)};
+\addplot[oursline,thick,mark=square*,mark size=2pt] coordinates {(0,427648271078) (1,1710593084286) (2,6842372337134) (3,27369489348528)};
+\addplot[ucbline,thick,mark=triangle*,mark size=2pt] coordinates {(0,336) (1,1343.5) (2,5368) (3,21441)};
+\end{groupplot}
+\node[anchor=west,inner sep=0pt,font=\bfseries\Large] at ([yshift=27mm]group c1r1.north west) {Accuracy and computation cost on the routing PSR};
+\node[anchor=west,inner sep=0pt,text=muted,font=\small] at ([yshift=20mm]group c1r1.north west) {All methods evaluated against max-policy TV $\leq\epsilon/4$.};
+\node[anchor=west,inner sep=0pt,text=omleline,font=\small\bfseries] at ([yshift=12mm]group c1r1.north west) {omle};
+\node[anchor=west,inner sep=0pt,text=oursline,font=\small\bfseries] at ([xshift=35mm,yshift=12mm]group c1r1.north west) {ours};
+\node[anchor=west,inner sep=0pt,text=ucbline,font=\small\bfseries] at ([xshift=75mm,yshift=12mm]group c1r1.north west) {psr\_ucb};
+\end{tikzpicture}
+\end{document}
