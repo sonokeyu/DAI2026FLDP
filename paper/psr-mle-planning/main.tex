@@ -68,16 +68,10 @@ The difficulty in bounding the number of oracle calls is that the learner choose
 
 \begin{itemize}
 \item \textbf{Few oracle calls with unknown reachable rank.}
-Our algorithm fits a model by ordinary MLE, plans once for an exploration reward in that model, and uses the resulting policy and test rules throughout a batch. Higher accuracy requires more episodes per batch, while the number of oracle calls grows only logarithmically with inverse accuracy. The known core-test dimension $D$ provides a deterministic round limit. With probability at least $1-\delta$, the data-dependent stopping rule produces a uniformly accurate model within $\softO(rH)$ calls to each oracle, even when the true reachable rank $r$ is unknown and much smaller than $D$ (Theorem~\ref{thm:main} and Corollary~\ref{cor:reward}).
+Our algorithm fits a model by ordinary MLE, plans for an exploration reward in that model, and uses the resulting policy and test rules throughout a batch. Higher accuracy requires more episodes per batch, while the number of oracle calls grows only logarithmically with inverse accuracy. The known core-test dimension $D$ provides a deterministic round limit. With probability at least $1-\delta$, the data-dependent stopping rule produces a model accurate under every policy within $\softO(rH)$ calls to each oracle. The bound depends on the true reachable rank $r$ even when the learner does not know it.
 
 \item \textbf{An executable certificate from one fitted model.}
-At each history we seek a linear combination of fitted test predictions that is large there and has small squared values on the training histories. B-stability bounds the coefficients of each local prediction error, and ordinary likelihood bounds its accumulated squared values on these histories. The resulting trajectory reward $b_k$ therefore satisfies, with high probability,
-\begin{equation}
- \TV(P_\st^\pi,P_{\wh\theta_k}^\pi)
-       \le \E_{\wh\theta_k,\pi} b_k \qquad \text{for every }\pi .
- \label{eq:intro}
-\end{equation}
-A small maximum certifies the fit. When the maximum is large, the policy identifies which histories to visit, and the maximizing coefficients specify actions and a bounded score for testing the prediction there.
+At each history we choose a combination of fitted test predictions that is large there but has remained small on the training histories. B-stability and the likelihood of those histories make its expected reward an upper bound on the fitted model's trajectory error under any policy. If planning cannot obtain a large reward, the fit is accurate under every policy. If it can, the resulting policy identifies histories to visit, while the selected test coefficients give actions and a bounded score for checking the prediction in the environment.
 
 \item \textbf{Counting progress across model updates.}
 Refitting recomputes the predictive coordinates of every stored history. A direction that appears poorly covered under one fit can therefore disappear under the next. We count progress in the fixed predictive space of the true system. In each continuing round, the training data either expand coverage of true predictive states or the diagnostic experiment exposes a prediction error. Randomly interrupting that experiment tests local predictions and constrains later fits on the diagnostic histories. Each alternative increases one of two log determinants by a constant. Their growth in dimension $r$ bounds the number of rounds.

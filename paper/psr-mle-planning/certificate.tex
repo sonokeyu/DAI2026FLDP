@@ -94,7 +94,12 @@ Set $S=8Y\beta$. At each refit, evaluate the histories in $\I_h$ using the curre
 Within a round only the objective changes with the query. The historical rows form one matrix whose thin QR factor can be reused for every query at that stage. Refitting reencodes the histories and rebuilds this factor (Appendix~\ref{app:numeric}). The buffers are multisets. The initial scalar support is $b_0=\max\{s:|s|\le W,\ N_0s^2\le S\}$. Define the exact reward $b=b_0+\sum_{h=1}^H b_h(\tau_{h-1})$. Each stage selects its coefficient with only the prefix available at that stage.
 
 \begin{proposition}[Stopping certificate]\label{prop:cert}
-The reward satisfies $0\le b\le LW$. On the event of Lemma~\ref{lem:mle}, it satisfies \eqref{eq:intro} for every policy.
+The reward satisfies $0\le b\le LW$. On the event of Lemma~\ref{lem:mle}, every policy satisfies
+\begin{equation}
+ \TV(P_\st^\pi,P_{\wh\theta}^\pi)
+       \le \E_{\wh\theta,\pi} b .
+ \label{eq:intro}
+\end{equation}
 \end{proposition}
 \begin{proof}
 Summing local calibration over the disjoint training episodes gives $N_0F_0^2+\sum_{h,i}F_h(\wh q_h(x_i))^2\le S$. At any new prefix, \eqref{eq:global} puts its supporting coefficient in the feasible set of \eqref{eq:program}. Hence $F_h(\wh q_h(x))\le b_h(x)$ and $F_0\le b_0$. Apply \eqref{eq:telescope}. The zero coefficient is feasible and each stage objective is at most $W$.
