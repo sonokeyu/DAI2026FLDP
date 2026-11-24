@@ -160,6 +160,46 @@ latexmk -pdf -outdir=reproduced reproduced/traditional_baselines.tex
 
 [Same interval comparison figure](results/traditional_baselines.pdf) · [All five configurations](results/target_summary.csv)
 
+### Average policy and random frozen policies
+
+We also compared three ways of choosing a deterministic routing policy. The
+**average** policy means the uniform mixture over all deterministic policies,
+with a fresh policy draw each episode. This has exactly the same trajectory
+distribution as independently randomizing each route and mode decision in
+each episode; the paired simulator confirms identical fitted-model and TV
+traces. It is therefore not a distinct baseline from **uniform** above.
+
+As a separate diagnostic, **random frozen batch** draws one deterministic
+policy and holds it fixed for eight episodes, then draws another. We used
+100 seeds, both truth orientations, 256 episodes, and gaps 0.1, 0.3, and 0.6.
+This measures the variability from reusing one random policy within an update
+batch; it is not a new paper algorithm or a comparison of oracle-call costs.
+
+At episode 256:
+
+| Gap | Average / per-episode random: mean TV; informative episodes | Random frozen batch: mean TV; informative episodes |
+| --- | ---: | ---: |
+| 0.1 | 0.0135; 31.70 | 0.0150; 30.71 |
+| 0.3 | 0.0037; 31.73 | 0.0052; 32.26 |
+| 0.6 | 0; 32.56 | 0; 31.10 |
+
+The frozen-batch random policy has a mean TV 0.0015 higher at gaps 0.1 and
+0.3, while matching at 0.6. Paired 95% bootstrap intervals for the
+frozen-minus-average TV difference are [-0.00275, 0.00575] and
+[-0.00375, 0.00675], respectively, so these runs do not establish a
+performance difference. They do establish the exact equivalence between
+the average policy and per-episode randomization in this toy setting.
+
+Reproduce with:
+
+```sh
+python -B run_average_random.py --output reproduced/average_random --seeds 100
+```
+
+The script writes per-seed checkpoints, aggregate curves, and paired
+bootstrap intervals. The policy TV is evaluated against the known two-model
+toy and the informative count is a diagnostic of coverage.
+
 
 ## Batch size and the episode/update tradeoff
 

@@ -1,0 +1,4 @@
+gap,runs,mean_frozen_minus_average,paired_bootstrap_95_low,paired_bootstrap_95_high
+0.1,200,0.0015,-0.0027500000000000003,0.00575
+0.3,200,0.0015,-0.00375,0.00675
+0.6,200,0.0,0.0,0.0
