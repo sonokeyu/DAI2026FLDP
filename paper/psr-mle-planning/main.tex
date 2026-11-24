@@ -1,5 +1,8 @@
 \documentclass[sigconf,nonacm]{acmart}
 \usepackage{amsmath,mathtools}
+\newfloat{algorithm}{t}{loa}
+\floatname{algorithm}{Algorithm}
+\captionsetup[algorithm]{justification=raggedright,singlelinecheck=false}
 \settopmatter{printfolios=true,printacmref=false}
 \setcopyright{none}
 \renewcommand{\shortauthors}{}
@@ -30,7 +33,7 @@
 \begin{document}
 \title[Learning PSRs with Ordinary MLE]{Learning Predictive State Representations with Ordinary Maximum Likelihood and Model Planning}
 \begin{abstract}
-In a partially observed system, exploration must collect enough information to plan for rewards specified after data collection. This requires accurate trajectory predictions under every policy. We study whether a learner can reach this goal with few calls to ordinary maximum likelihood estimation (MLE) and a planner for a single fitted model. From that model's predictions of observable tests, we construct an exploration reward whose expected value bounds trajectory prediction error under each policy. A small optimal reward certifies the fit; a large one yields a policy and an experiment that test an uncertain prediction. Although refitting changes the predictive coordinates assigned to past histories, the experiments accumulate progress in the fixed predictive space of the true system. For a finite realizable class of uniformly B-stable predictive state representations, our algorithm returns, with high probability, a model that supports an $\eps$-optimal policy for any subsequent bounded observable reward. It uses $\softO(r\Lambda_B^4 A U^2 H^4\beta/\eps^2)$ episodes and $\softO(rH)$ calls each to ordinary MLE and single-model planning. Here $r$ is the unknown true reachable rank, $U$ counts core action strings, $A$ is the number of actions, and $\beta$ is the likelihood budget.
+In a partially observed system, exploration must collect enough information to plan for rewards specified after data collection. This requires accurate trajectory predictions under every policy. We study whether a learner can reach this goal with few calls to ordinary maximum likelihood estimation (MLE) and a planner for a single fitted model. From that model's predictions of observable tests, we construct an exploration reward whose expected value bounds trajectory prediction error under each policy. A small optimal reward certifies the fit. A large one yields a policy and an experiment that test an uncertain prediction. Although refitting changes the predictive coordinates assigned to past histories, the experiments accumulate progress in the fixed predictive space of the true system. For a finite realizable class of uniformly B-stable predictive state representations, our algorithm returns, with high probability, a model that supports an $\eps$-optimal policy for any subsequent bounded observable reward. The number of MLE and planning calls is nearly proportional to the horizon and the true reachable rank, which the learner need not know. Greater accuracy requires more episodes in each batch while increasing the number of oracle calls only logarithmically. The episode bound has quadratic dependence on inverse accuracy and polynomial dependence on the stability bound and core-action complexity.
 \end{abstract}
 \maketitle
 
@@ -158,11 +161,11 @@ After separating the likelihood budgets, the ratio of our polynomial factor to t
 \subsection{Exploration with ordinary MLE}
 Store a data set $\mathcal D$ of complete logged episodes, a multiset $\I_h$ of training prefixes at each stage, and the number $N_0$ of initial-core episodes. The log includes both the physical trajectory and the randomized choices used to collect it. The stage buffers can therefore be reconstructed from $\mathcal D$. The learner reevaluates the predictive features of these same histories whenever the fit changes.
 
-\begin{figure}[t]
+\begin{algorithm}[t]
+\caption{Learning with a fitted PSR}
+\label{alg:algorithm}
 \raggedright
 \hrule\smallskip
-\textbf{Algorithm 1}\quad Learning with a fitted PSR\par
-\smallskip
 \emph{Input.} Model class, core tests, stability bound $\Lambda_B$, accuracy $\eps$, confidence $1-\delta$, and task reward $R$.\par
 \smallskip
 Compute the limit $K(D)$ from the largest core dimension $D$ (Appendix~\ref{app:budget}). Initialize $\mathcal D$ and the buffers to empty. Repeat for at most $K(D)$ rounds.
@@ -173,12 +176,10 @@ Compute the limit $K(D)$ from the largest core dimension $D$ (Appendix~\ref{app:
 \item Freeze $\wh\theta_k$, the policy $\pi^k$, and the score-selection rule. Collect the training and nested diagnostic batches. Append every episode to $\mathcal D$, update the training buffers and $N_0$, then refit.
 \end{enumerate}
 Return failure after $K(D)$ completed nonstopping rounds.\par\smallskip\hrule
-\caption{The only optimization over models occurs in step 1. The two planning calls optimize different rewards in the same model.}
 \Description{Pseudocode for fitting a model, planning to maximize its uncertainty reward, and either returning a policy or collecting more data.}
-\label{fig:algorithm}
-\end{figure}
+\end{algorithm}
 
-Figure~\ref{fig:algorithm} gives the decision rule. The trajectory reward is the sum of a scalar initial-state term and the attained support values of the stage programs in \sect{sec:certificate}. The numerical rule has a fixed tie convention, so revisiting a history in the same round produces the same coefficient and the same experiment. When exploration continues the learner freezes this rule before gathering the first episode of either batch.
+Algorithm~\ref{alg:algorithm} gives the decision rule. Only step 1 optimizes over models. The exploration and task-reward planning calls optimize in the same fitted model. The trajectory reward is the sum of a scalar initial-state term and the attained support values of the stage programs in \sect{sec:certificate}. The numerical rule has a fixed tie convention, so revisiting a history in the same round produces the same coefficient and the same experiment. When exploration continues the learner freezes this rule before gathering the first episode of either batch.
 
 \emph{Training batch.} At each $h=1,\ldots,H$, run $m_k$ fresh episodes following $\pi^k$ to $x=\tau_{h-1}$. Flip a fair coin. The first branch draws a uniform stage-$h$ core action string and executes it. The second observes $o_h$, takes a uniform action, and executes a uniform stage-$(h+1)$ core string. The second branch samples the core string in the roll-in and intervention of \citet[Eq.~(10)]{omle}. The two coin outcomes measure the current prediction $q_h$ and the joint prediction $B_h(o,a)q_h$ under the same roll-in distribution. Retain $x$ in the stage buffer $\I_h$. Run $m_k$ additional initial-core experiments from the empty history and increment their count $N_0$. Every experiment uses a common completion rule through the horizon. For a chosen string, one observes which listed observation outcome occurred, or that none occurred.
 
