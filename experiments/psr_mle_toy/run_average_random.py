@@ -82,7 +82,7 @@ def main():
                 runs.append(dict(gap=gap, truth=truth, seed=seed,
                                  method=method, **row))
     with (args.output / "average_random_runs.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(runs[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(runs[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(runs)
     summary = []
@@ -96,7 +96,7 @@ def main():
                             median_tv=median(r["policy_tv"] for r in group),
                             mean_informative=mean(r["informative"] for r in group)))
     with (args.output / "average_random_summary.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(summary[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(summary[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(summary)
     differences = []
@@ -118,7 +118,7 @@ def main():
             paired_bootstrap_95_low=boot[500], paired_bootstrap_95_high=boot[19_499],
         ))
     with (args.output / "average_random_difference.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(differences[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(differences[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(differences)
     print(f"completed {len(summary)} checkpoints; average and random_episode traces matched exactly")
