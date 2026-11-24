@@ -107,17 +107,23 @@ general solver or a full paper reproduction.
 ## Multi-coordinate rank and precision sweep
 
 [`multicoordinate_summary.csv`](results/multicoordinate/multicoordinate_summary.csv)
-contains a second finite audit with 1, 2, 4, or 8 independent uncertain test
+contains a finite audit with 1, 2, 4, or 8 independent uncertain test
 coordinates. `ours_batch` uses an ordinary MLE and single-model planner, then
 collects a fixed Hoeffding-sized batch on the least-covered coordinate.
 OMLE collects its uniform and disagreement interventions and updates its
-coordinate confidence product after every pair. Each cell uses 100 random
-truth vectors. This environment isolates the dependence on the number of
-independent model coordinates; it is not a partially observed benchmark.
+coordinate confidence product after every pair. The two traditional controls
+choose either a coordinate uniformly at random or the least-visited
+coordinate, and refit ordinary MLE every eight episodes. All methods use the
+same coordinatewise Hoeffding stopping threshold (except OMLE, which uses its
+likelihood-diameter certificate). Each cell uses 100 random truth vectors.
+This environment isolates the dependence on the number of independent model
+coordinates; it is not a partially observed benchmark.
 
 At dimension 8 and epsilon 0.1, `ours_batch` used 9 MLE and 9 planning calls
 and 32,488 episodes; OMLE used a median of 3,006.5 joint searches and 6,013
-episodes. All 1,600 runs stopped with exact TV zero. The OMLE pair-score
+episodes. Uniform random exploration used 33,236 episodes and 4,154.5 MLE
+calls; least-count exploration used 32,488 episodes and 4,061 MLE calls.
+All 3,200 runs stopped with exact TV zero. The OMLE pair-score
 instrumentation grows sharply with the number of unresolved coordinates
 (median 52.9 million pair evaluations in that cell), while `ours_batch` never
 scores model pairs. These measurements concern this factorized optimizer and

@@ -10,8 +10,10 @@ coordinate with the largest Hoeffding bonus and samples a precomputed batch
 that makes its confidence radius at most epsilon/4. OMLE uses a uniform
 intervention plus a targeted intervention each round and maintains the
 coordinatewise likelihood confidence product (Bonferroni allocation). This
-is a controlled finite-class audit of call scaling, not the paper's full
-sequential PSR benchmark.
+Traditional uniform and least-count coordinate exploration collect eight
+episodes per ordinary-MLE refit and stop at the same coordinatewise Hoeffding
+threshold. This is a controlled finite-class audit of call scaling, not the
+paper's full sequential PSR benchmark.
 """
 from argparse import ArgumentParser
 import csv
@@ -26,6 +28,7 @@ DIMENSIONS = (1, 2, 4, 8)
 ACCURACIES = (.2, .1)
 SEEDS = 100
 DELTA = .1
+MLE_BATCH = 8
 
 
 def truth_vector(dimension, seed):
@@ -111,6 +114,52 @@ def run_omle(dimension, eps, seed, cap):
         updates += 1
 
 
+def run_traditional(dimension, eps, seed, cap, method):
+    """Uniform or least-count coordinate exploration with batched ordinary MLE."""
+    truth = truth_vector(dimension, seed)
+    rng = random.Random(seed + (98317 if method == "uniform" else 131071)
+                        * dimension + int(eps*10000))
+    n_required = ceil(8 * log(2 * dimension / DELTA) / eps**2)
+    hits, misses = [0]*dimension, [0]*dimension
+    counts = [0]*dimension
+    episodes = mle_calls = 0
+    while episodes < cap:
+        for _ in range(min(MLE_BATCH, cap - episodes)):
+            if method == "uniform":
+                arm = rng.randrange(dimension)
+            else:
+                least = min(counts)
+                ties = [i for i, count in enumerate(counts) if count == least]
+                arm = rng.choice(ties)
+            p = .2 + eps * truth[arm]
+            y = rng.random() < p
+            counts[arm] += 1
+            hits[arm] += int(y)
+            misses[arm] += int(not y)
+            episodes += 1
+        fitted = fit_bits(hits, misses, eps)
+        mle_calls += 1
+        stopped = min(counts) >= n_required
+        if stopped:
+            return dict(method=method, dimension=dimension, epsilon=eps,
+                        target_tv=eps/4, seed=seed, episodes=episodes,
+                        mle_calls=mle_calls, planning_calls=0,
+                        joint_search_calls=0, pair_scores=0,
+                        fitted_errors=sum(a != b for a,b in zip(fitted,truth)),
+                        exact_tv=.5*eps if fitted != truth else 0.0,
+                        bonus_stop=True, n_required_per_coordinate=n_required,
+                        episodes_cap=cap)
+    fitted = fit_bits(hits, misses, eps)
+    return dict(method=method, dimension=dimension, epsilon=eps,
+                target_tv=eps/4, seed=seed, episodes=episodes,
+                mle_calls=mle_calls, planning_calls=0,
+                joint_search_calls=0, pair_scores=0,
+                fitted_errors=sum(a != b for a,b in zip(fitted,truth)),
+                exact_tv=.5*eps if fitted != truth else 0.0,
+                bonus_stop=False, n_required_per_coordinate=n_required,
+                episodes_cap=cap)
+
+
 def main():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -122,12 +171,15 @@ def main():
     for d, eps, seed in product(DIMENSIONS, ACCURACIES, range(args.seeds)):
         rows.append(run_ours(d, eps, seed, args.cap))
         rows.append(run_omle(d, eps, seed, args.cap))
+        rows.append(run_traditional(d, eps, seed, args.cap, "uniform"))
+        rows.append(run_traditional(d, eps, seed, args.cap, "count"))
     with (args.output / "multicoordinate_runs.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(dict.fromkeys(k for r in rows for k in r)))
+        writer = csv.DictWriter(stream, fieldnames=list(dict.fromkeys(k for r in rows for k in r)),
+                                lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     summary = []
-    for method, d, eps in product(("ours_batch", "omle"), DIMENSIONS, ACCURACIES):
+    for method, d, eps in product(("ours_batch", "omle", "uniform", "count"), DIMENSIONS, ACCURACIES):
         group = [r for r in rows if r["method"] == method and r["dimension"] == d and r["epsilon"] == eps]
         summary.append(dict(method=method, dimension=d, epsilon=eps, target_tv=eps/4,
                             runs=len(group), stop_rate=mean(r.get("bonus_stop",r.get("diameter_stop")) for r in group),
@@ -138,7 +190,7 @@ def main():
                             median_joint_calls=median(r["joint_search_calls"] for r in group),
                             median_pair_scores=median(r.get("pair_scores",0) for r in group), cap=args.cap))
     with (args.output / "multicoordinate_summary.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(summary[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(summary[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(summary)
     print(f"completed {len(rows)} runs across dimension and accuracy sweeps")

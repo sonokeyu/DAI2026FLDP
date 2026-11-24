@@ -54,13 +54,16 @@ Hoeffding batch, and performs one ordinary MLE plus one plan per coordinate.
 OMLE uses a uniform intervention and a targeted disagreement intervention,
 then updates its likelihood confidence product after each pair.
 
-All 1,600 runs stop with exact trajectory TV zero. For dimension 8 and
-epsilon 0.1, `ours_batch` uses 9 MLE calls, 9 plans, and 32,488 episodes.
-OMLE uses a median 3,006.5 joint searches and 6,013 episodes. The OMLE
-objective's median pair-score count is 52,920,412 in that cell. This isolates
-how pair search can grow with model uncertainty; `ours_batch` is a purpose
-built factorized analogue, not the complete PSR algorithm or its Appendix D
-schedule.
+The expanded 3,200-run sweep also includes uniform random coordinate
+exploration and least-count coordinate exploration, both followed by ordinary
+MLE refits every eight episodes. All runs stop with exact trajectory TV zero.
+For dimension 8 and epsilon 0.1, `ours_batch` uses 9 MLE calls, 9 plans, and
+32,488 episodes; OMLE uses a median 3,006.5 joint searches and 6,013 episodes;
+uniform uses 33,236 episodes and 4,154.5 MLE calls; least-count uses 32,488
+episodes and 4,061 MLE calls. The OMLE objective's median pair-score count is
+52,920,412 in that cell. This isolates how pair search can grow with model
+uncertainty; `ours_batch` is a purpose-built factorized analogue, not the
+complete PSR algorithm or its Appendix D schedule.
 
 ## Rank, horizon, and reward reuse
 
