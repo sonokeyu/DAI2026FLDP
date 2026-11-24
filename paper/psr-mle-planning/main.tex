@@ -1,5 +1,7 @@
 \documentclass[sigconf,nonacm]{acmart}
 \usepackage{amsmath,mathtools}
+\usepackage{enumitem}
+\floatstyle{ruled}
 \newfloat{algorithm}{t}{loa}
 \floatname{algorithm}{Algorithm}
 \captionsetup[algorithm]{justification=raggedright,singlelinecheck=false}
@@ -162,24 +164,27 @@ After separating the likelihood budgets, the ratio of our polynomial factor to t
 Store a data set $\mathcal D$ of complete logged episodes, a multiset $\I_h$ of training prefixes at each stage, and the number $N_0$ of initial-core episodes. The log includes both the physical trajectory and the randomized choices used to collect it. The stage buffers can therefore be reconstructed from $\mathcal D$. The learner reevaluates the predictive features of these same histories whenever the fit changes.
 
 \begin{algorithm}[t]
-\caption{Learning with a fitted PSR}
+\caption{\textsc{Learning with a Fitted PSR}}
 \label{alg:algorithm}
 \raggedright
-\hrule\smallskip
-\emph{Input.} Model class, core tests, stability bound $\Lambda_B$, accuracy $\eps$, confidence $1-\delta$, and task reward $R$.\par
-\smallskip
-Compute the limit $K(D)$ from the largest core dimension $D$ (Appendix~\ref{app:budget}). Initialize $\mathcal D$ and the buffers to empty. Repeat for at most $K(D)$ rounds.
-\begin{enumerate}
-\item Fit $\wh\theta_k$ by ordinary MLE on $\mathcal D$. Build the stage programs from the reencoded buffers.
-\item Plan for the attained reward $\widetilde b_k$ in $\wh\theta_k$ and estimate the returned policy's bonus value by fitted-model simulation. Use tolerance $\eps/128$ in both steps.
-\item If the estimate is at most $3\eps/16$, return the policy obtained by planning for $R$ in $\wh\theta_k$ to accuracy $\eps/2$.
-\item Freeze $\wh\theta_k$, the policy $\pi^k$, and the score-selection rule. Collect the training and nested diagnostic batches. Append every episode to $\mathcal D$, update the training buffers and $N_0$, then refit.
+\begin{enumerate}[label=\arabic*:,leftmargin=2em,labelsep=.45em,itemsep=2pt,parsep=0pt,topsep=3pt]
+\item \textbf{input} model class $\Theta$, core tests, $\Lambda_B$, $\eps$, $\delta$, and task reward $R$.
+\item \textbf{initialize} $\mathcal D$ and the stage buffers as empty, $N_0=0$, and the round limit $K(D)$ from Appendix~\ref{app:budget}.
+\item \textbf{for} $k=1,\ldots,K(D)$ \textbf{do}
+\item \quad Fit $\wh\theta_k$ by ordinary MLE on $\mathcal D$ and build the stage programs from the reencoded buffers.
+\item \quad Plan for $\widetilde b_k$ in $\wh\theta_k$ and estimate the policy's bonus value by fitted-model simulation, each to tolerance $\eps/128$.
+\item \quad \textbf{if} the estimate is at most $3\eps/16$ \textbf{then}
+\item \qquad \textbf{return} a policy planned for $R$ in $\wh\theta_k$ to accuracy $\eps/2$.
+\item \quad \textbf{end if}
+\item \quad Freeze $\wh\theta_k$, $\pi^k$, and the score-selection rule. Collect the training and nested diagnostic batches.
+\item \quad Append all episodes to $\mathcal D$, update the training buffers and $N_0$, then refit in the next round.
+\item \textbf{end for}
+\item \textbf{return failure}
 \end{enumerate}
-Return failure after $K(D)$ completed nonstopping rounds.\par\smallskip\hrule
 \Description{Pseudocode for fitting a model, planning to maximize its uncertainty reward, and either returning a policy or collecting more data.}
 \end{algorithm}
 
-Algorithm~\ref{alg:algorithm} gives the decision rule. Only step 1 optimizes over models. The exploration and task-reward planning calls optimize in the same fitted model. The trajectory reward is the sum of a scalar initial-state term and the attained support values of the stage programs in \sect{sec:certificate}. The numerical rule has a fixed tie convention, so revisiting a history in the same round produces the same coefficient and the same experiment. When exploration continues the learner freezes this rule before gathering the first episode of either batch.
+Algorithm~\ref{alg:algorithm} gives the decision rule. Only the fitting step optimizes over models. The exploration and task-reward planning calls optimize in the same fitted model. The trajectory reward is the sum of a scalar initial-state term and the attained support values of the stage programs in \sect{sec:certificate}. The numerical rule has a fixed tie convention, so revisiting a history in the same round produces the same coefficient and the same experiment. When exploration continues the learner freezes this rule before gathering the first episode of either batch.
 
 \emph{Training batch.} At each $h=1,\ldots,H$, run $m_k$ fresh episodes following $\pi^k$ to $x=\tau_{h-1}$. Flip a fair coin. The first branch draws a uniform stage-$h$ core action string and executes it. The second observes $o_h$, takes a uniform action, and executes a uniform stage-$(h+1)$ core string. The second branch samples the core string in the roll-in and intervention of \citet[Eq.~(10)]{omle}. The two coin outcomes measure the current prediction $q_h$ and the joint prediction $B_h(o,a)q_h$ under the same roll-in distribution. Retain $x$ in the stage buffer $\I_h$. Run $m_k$ additional initial-core experiments from the empty history and increment their count $N_0$. Every experiment uses a common completion rule through the horizon. For a chosen string, one observes which listed observation outcome occurred, or that none occurred.
 
