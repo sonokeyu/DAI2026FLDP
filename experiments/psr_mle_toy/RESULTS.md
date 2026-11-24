@@ -161,6 +161,61 @@ latexmk -pdf -outdir=reproduced reproduced/traditional_baselines.tex
 [Same interval comparison figure](results/traditional_baselines.pdf) · [All five configurations](results/target_summary.csv)
 
 
+## Batch size and the episode/update tradeoff
+
+The matched eight-episode comparison above controls the update interval.
+The batch sweep asks how each method can trade episodes for fewer updates
+when allowed to choose its own interval. It uses the same three gaps,
+200 trials per gap and setting, and mean TV targets of 0.020, 0.010, and
+0.005, with a cap of 4,096 episodes. Each setting is evaluated at its
+own refits, and a target must hold through the final recorded checkpoint.
+
+**ours**, **uniform**, and **count** use batch sizes of 8, 32, 128, 512,
+and 2,048 episodes. **omle** uses the same grid plus the original size
+of 2. The larger OMLE batches repeat its two intervention designs under
+the same frozen policy. For **ours**, a batch of size B has four training
+blocks of B/8 episodes apiece and B/2 nested diagnostic episodes. This
+scales both parts of the eight-episode experiment at the same rate.
+These are experimental batch schedules. The appendix schedule is studied
+separately below. The update counts exclude the empty-data fit. An
+OMLE update and an ordinary MLE refit with single-model planning have
+different work per call.
+
+Costs at sustained mean TV ≤ 0.010, shown as **episodes / updates**:
+
+| Gap | ours, batch 8 | ours, batch 128 | ours, smallest batch with one update | omle, batch 2 | omle, smallest batch with one update |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0.1 | 1,128 / 141 | 640 / 5 | 2,048 / 1 | 202 / 101 | 512 / 1 |
+| 0.3 | 416 / 52 | 384 / 3 | 512 / 1 | 82 / 41 | 128 / 1 |
+| 0.6 | 136 / 17 | 256 / 2 | 512 / 1 | 50 / 25 | 128 / 1 |
+
+The one-update settings are the smallest among the batches tested.
+The sweep shows the tradeoff against **omle** at its original interval:
+**ours** needs far fewer updates when it commits to a larger batch.
+Batching **omle** also lowers its update count. At target 0.010, every
+observed **ours** point is dominated by a tested **omle** point with
+at most the same episodes and updates, and a strict improvement in at
+least one of those costs. These are point estimates for the routing toy
+under the tested batch grid. The CSV records paired-bootstrap intervals
+and indicates cases in which a target was missed at the cap.
+
+The figure joins the non-dominated points within each method and marks
+the original intervals separately. The CSV also contains **uniform** and
+**count**. In the per-run archive, each character of `fit_error` denotes
+whether the fitted model was wrong at the corresponding update, including
+the empty-data fit at position zero. Its exact worst-policy TV is zero
+for a correct fit or Δ/2 for a wrong fit. The second retained statistic is
+the number of distinguishing tests by the cap.
+
+```sh
+python -B run_batch_sweep.py --output reproduced
+python -B plot_batch_sweep.py reproduced/batch_summary.csv reproduced/batch_tradeoff.tex
+latexmk -pdf -outdir=reproduced reproduced/batch_tradeoff.tex
+```
+
+[Batch tradeoff figure](results/batch_tradeoff.pdf) · [Cost summary](results/batch_summary.csv) · [TV curves](results/batch_curves.csv) · [Per-seed fit traces](results/batch_runs.csv.gz)
+
+
 ## Stopping and nested diagnostics
 
 On the three-stage environment, all stage supports are solved by finite

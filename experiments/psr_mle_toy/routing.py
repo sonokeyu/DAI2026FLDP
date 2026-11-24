@@ -290,7 +290,7 @@ REWARDS = {
 
 
 def run_algorithm(models, truth_index, epsilon, seed, condition="nested",
-                  theory=False, scale=1.0, fixed_budget=None):
+                  theory=False, scale=1.0, fixed_budget=None, *, fixed_training=1):
     """Run Algorithm 1 using exact multinomial draws for logged batch counts."""
     budget = Budget(epsilon, candidates=len(models))
     rng = np.random.default_rng(seed)
@@ -307,7 +307,7 @@ def run_algorithm(models, truth_index, epsilon, seed, condition="nested",
     limit = budget.cap()
     if fixed_budget is not None:
         total, step = fixed_budget
-        if theory or total < 0 or step <= L or total % step:
+        if theory or total < 0 or fixed_training < 1 or step <= L * fixed_training or total % step:
             raise ValueError("fixed budget needs a positive multiple of a complete block")
         limit = 1 + total // step
     for k in range(1, limit + 1):
@@ -338,7 +338,7 @@ def run_algorithm(models, truth_index, epsilon, seed, condition="nested",
         m = budget.theory_training(k) if theory else ceil(scale * 2_000 / epsilon ** 2)
         n = budget.theory_nested() if theory else m
         if fixed_budget is not None:
-            m, n = 1, step - L
+            m, n = fixed_training, step - L * fixed_training
         extra = cuts if condition == "nested" else rho
         for stage, components in enumerate([*training_designs(policy), extra]):
             p = law(truth, components)

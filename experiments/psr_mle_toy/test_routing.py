@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -71,6 +72,21 @@ class RoutingTests(unittest.TestCase):
         self.assertEqual(omle[-1]["episodes"], 256)
         self.assertEqual(omle[-1]["updates"], 128)
         self.assertEqual(omle[-1]["policy_tv"], 0)
+
+    def test_fixed_budget_scales_training_and_nested_batches(self):
+        rng = np.random.default_rng(0)
+        sizes = []
+
+        def multinomial(n, probabilities):
+            sizes.append(n)
+            return rng.multinomial(n, probabilities)
+
+        models = [RoutingModel(0.2), RoutingModel(0.3)]
+        with patch("routing.np.random.default_rng") as factory:
+            factory.return_value.multinomial.side_effect = multinomial
+            result = run_algorithm(models, 1, 1.0, 0, fixed_budget=(64, 32), fixed_training=4)
+        self.assertEqual(sizes, [4, 4, 4, 4, 16] * 2)
+        self.assertEqual([row["episodes"] for row in result], [0, 32, 64])
 
     def test_fixed_dimension_rank_and_stop(self):
         self.assertEqual(reachable_ranks(transition(4), 6), [1, 2, 3, 4, 4, 4])
