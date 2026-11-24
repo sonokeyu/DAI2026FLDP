@@ -137,7 +137,7 @@ The training and diagnostic alternatives give increments of at least $\log 2$ an
               +rL\log(1+Kr/\lambda_b).
  \label{eq:cap}
 \end{equation}
-The right-hand side grows logarithmically in $K$, giving $\softO(rH)$ updates. Appendix~\ref{app:budget} turns this inequality into a deterministic cap and allocates failure probabilities. The batch cost can now be read off directly. To detect the second alternative we need resolution $\eta$ of order $\eps/(LW)$. Turning a squared-error allowance of order $\eta^2$ into the historical bound \eqref{eq:nestedenergy} requires
+The right-hand side grows logarithmically in $K$, giving $\softO(rH)$ updates. Appendix~\ref{app:budget} uses the same inequality twice, at the known dimension $D$ to cap the algorithm and at the true rank $r$ to bound its stopping time on the joint success event. The batch cost can now be read off directly. To detect the second alternative we need resolution $\eta$ of order $\eps/(LW)$. Turning a squared-error allowance of order $\eta^2$ into the historical bound \eqref{eq:nestedenergy} requires
 \[
  n_N=O(YL\beta/\eta^2)=O(YL^3W^2\beta/\eps^2).
 \]

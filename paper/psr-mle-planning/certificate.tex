@@ -91,7 +91,7 @@ Set $S=8Y\beta$. At each refit, evaluate the histories in $\I_h$ using the curre
  \sum_{x_i\in\I_h}g_v(\wh\phi_h(x_i))^2\le S .
  \label{eq:program}
 \end{align}
-The buffers are multisets. The initial scalar support is $b_0=\max\{s:|s|\le W,\ N_0s^2\le S\}$. Define the exact reward $b=b_0+\sum_{h=1}^H b_h(\tau_{h-1})$. Each stage selects its coefficient with only the prefix available at that stage.
+Within a round only the objective changes with the query. The historical rows form one matrix whose thin QR factor can be reused for every query at that stage. Refitting reencodes the histories and rebuilds this factor (Appendix~\ref{app:numeric}). The buffers are multisets. The initial scalar support is $b_0=\max\{s:|s|\le W,\ N_0s^2\le S\}$. Define the exact reward $b=b_0+\sum_{h=1}^H b_h(\tau_{h-1})$. Each stage selects its coefficient with only the prefix available at that stage.
 
 \begin{proposition}[Stopping certificate]\label{prop:cert}
 The reward satisfies $0\le b\le LW$. On the event of Lemma~\ref{lem:mle}, it satisfies \eqref{eq:intro} for every policy.
