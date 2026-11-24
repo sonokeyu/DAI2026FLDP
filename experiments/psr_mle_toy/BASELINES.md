@@ -75,6 +75,62 @@ The machine-readable inputs are
 [`psr_ucb_summary.csv`](results/psr_ucb/psr_ucb_summary.csv). The detailed
 PSR-UCB trace is in [`psr_ucb_rounds.csv`](results/psr_ucb/psr_ucb_rounds.csv).
 
+## Certificate matched OMLE and E2D comparison
+
+The earlier table uses OMLE's retrospective fixed-horizon accuracy selection.
+For the algorithmic comparison, a separate OMLE run now stops when its
+confidence-set all-policy TV diameter is at most epsilon/4. `ours` retains
+its theorem bonus stop. Each method is evaluated on the same exact-TV target.
+The two stop rules are both data-driven certificates, while their episode
+budgets remain method-specific.
+
+| epsilon | target TV | OMLE episodes / joint searches | ours episodes / MLE / plans | E2D fixed episodes / game solves |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.40 | 0.1000 | 94 / 47 | 427,648,271,078 / 3 / 3 | 32 / 32 |
+| 0.20 | 0.0500 | 322 / 161 | 1,710,593,084,286 / 3 / 3 | 96 / 96 |
+| 0.10 | 0.0250 | 1,211 / 605.5 | 6,842,372,337,134 / 3 / 3 | 272 / 272 |
+| 0.05 | 0.0125 | 4,305 / 2,152.5 | 27,369,489,348,528 / 3 / 3 | 1,104 / 1,104 |
+
+Each point aggregates 200 OMLE and 200 `ours` runs (100 per truth).
+OMLE stopped all runs, had no false stops, and its confidence set contained
+the truth at every stop in this finite audit. `ours` also had no false stops
+and exact stop TV zero in these same routing runs. E2D's output is evaluated
+at a fixed horizon selected externally to achieve at least 90% success for
+both truths sustained to the cap; it does not certify stopping.
+
+E2D uses the exact two-model saddle point for this symmetric routing class.
+Its game optimizer selects the informative policy and a uniform distribution
+over the two output models; ordinary MLE breaks the output tie. This is an
+exact specialization of the All-Policy Model-Estimation E2D update, not a
+general solver or a full paper reproduction.
+
+## Multi-coordinate rank and precision sweep
+
+[`multicoordinate_summary.csv`](results/multicoordinate/multicoordinate_summary.csv)
+contains a second finite audit with 1, 2, 4, or 8 independent uncertain test
+coordinates. `ours_batch` uses an ordinary MLE and single-model planner, then
+collects a fixed Hoeffding-sized batch on the least-covered coordinate.
+OMLE collects its uniform and disagreement interventions and updates its
+coordinate confidence product after every pair. Each cell uses 100 random
+truth vectors. This environment isolates the dependence on the number of
+independent model coordinates; it is not a partially observed benchmark.
+
+At dimension 8 and epsilon 0.1, `ours_batch` used 9 MLE and 9 planning calls
+and 32,488 episodes; OMLE used a median of 3,006.5 joint searches and 6,013
+episodes. All 1,600 runs stopped with exact TV zero. The OMLE pair-score
+instrumentation grows sharply with the number of unresolved coordinates
+(median 52.9 million pair evaluations in that cell), while `ours_batch` never
+scores model pairs. These measurements concern this factorized optimizer and
+should not be read as wall-clock speedups for general solvers.
+
+Reproduce these runs with:
+
+```sh
+python3 experiments/psr_mle_toy/run_omle_certificate.py --output experiments/psr_mle_toy/results/matched_certificates --seeds 100 --cap 16384
+python3 experiments/psr_mle_toy/run_e2d_toy.py --output experiments/psr_mle_toy/results/matched_certificates/e2d --seeds 100 --cap 16384
+python3 experiments/psr_mle_toy/run_multicoordinate.py --output experiments/psr_mle_toy/results/multicoordinate --seeds 100 --cap 131072
+```
+
 ## Related papers found
 
 ### Closest recent match: PSR-UCB (ICLR 2024)

@@ -1,0 +1,5 @@
+epsilon,target_tv,runs,selected_fixed_episodes,selected_game_optimizer_calls,success_rate_at_selected,cap,eta,update_calls_per_episode,output_model_distribution
+0.4,0.1,200,32,32,0.96,16384,0.5,1,uniform; MLE tie break
+0.2,0.05,200,96,96,0.93,16384,0.5,1,uniform; MLE tie break
+0.1,0.025,200,272,272,0.9,16384,0.5,1,uniform; MLE tie break
+0.05,0.0125,200,1104,1104,0.9,16384,0.5,1,uniform; MLE tie break
