@@ -83,20 +83,55 @@ episodes were 33,000,000 at epsilon 0.2 and 132,000,000 at epsilon 0.1, with
 133 MLE and 133 planning calls in both settings. The continuous-truth runs
 also stopped in 133 rounds, but their median TV was 0.0688 and their 90th
 percentile was 0.0882. Only 15% and 1% of those runs, respectively, were within
-the epsilon/4 target. The fitting class cannot represent the continuous true
-probabilities, so the fitted-model bonus stopping rule does not certify the
-true-environment TV in this misspecified condition. This experiment measures
-that gap directly. It is not a theorem violation because the theorem assumes
-realizability.
+the epsilon/4 target.
+
+We then ran **omle**, **uniform + MLE**, and **count + MLE** on the exact same
+four-branch environment and paired seed set. OMLE collects one uniform and
+one disagreement episode per joint-search call, uses a fixed likelihood slack
+for the 131,072-episode horizon, and stops when the current confidence-set TV
+diameter is at most epsilon/4. Uniform and count collect data until every
+branch reaches the Hoeffding sample threshold, then make one ordinary MLE
+call. Uniform randomizes route and mode. Count selects the least-visited
+branch at each cue. The table reports median episodes, median relevant oracle
+calls, and the fraction whose exact worst-policy TV is at most epsilon/4.
+
+| True model condition | ε | Method | Episodes | Calls | Median TV | Within target |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| In candidate class | 0.2 | ours | 33,000,000 | 133 MLE + 133 planning | 0 | 100% |
+| In candidate class | 0.2 | omle | 1,051 | 526.5 joint searches | 0 | 100% |
+| In candidate class | 0.2 | uniform + MLE | 7,230 | 1 MLE | 0 | 100% |
+| In candidate class | 0.2 | count + MLE | 3,564 | 1 MLE | 0 | 100% |
+| In candidate class | 0.1 | ours | 132,000,000 | 133 MLE + 133 planning | 0 | 100% |
+| In candidate class | 0.1 | omle | 1,051 | 526.5 joint searches | 0 | 100% |
+| In candidate class | 0.1 | uniform + MLE | 28,548 | 1 MLE | 0 | 100% |
+| In candidate class | 0.1 | count + MLE | 14,131 | 1 MLE | 0 | 100% |
+| Continuous truth | 0.2 | ours | 33,000,000 | 133 MLE + 133 planning | 0.0688 | 15% |
+| Continuous truth | 0.2 | omle | 2,976 | 1,489 joint searches | 0.0694 | 15% |
+| Continuous truth | 0.2 | uniform + MLE | 7,226 | 1 MLE | 0.0695 | 15% |
+| Continuous truth | 0.2 | count + MLE | 3,565 | 1 MLE | 0.0703 | 15% |
+| Continuous truth | 0.1 | ours | 132,000,000 | 133 MLE + 133 planning | 0.0688 | 1% |
+| Continuous truth | 0.1 | omle | 2,976 | 1,489 joint searches | 0.0694 | 1% |
+| Continuous truth | 0.1 | uniform + MLE | 28,500 | 1 MLE | 0.0688 | 1% |
+| Continuous truth | 0.1 | count + MLE | 14,142 | 1 MLE | 0.0688 | 1% |
+
+All methods stopped in all 100 runs in each cell. In the realizable setting,
+the two MLE exploration baselines use fewer episodes and fewer MLE calls than
+ours. OMLE also uses far fewer episodes, with many more joint searches. Under
+continuous-truth misspecification, the four methods have similar residual TV,
+and none reliably reaches the requested threshold. Oracle-call counts are
+not interchangeable measures of wall-clock cost.
 
 Reproduce with:
 
 ```sh
 python3 experiments/psr_mle_toy/run_full_psr_multicoordinate.py --output experiments/psr_mle_toy/results/full_psr_multicoordinate --seeds 100 --scale 1.0
+python3 experiments/psr_mle_toy/compare_full_psr_baselines.py --output experiments/psr_mle_toy/results/full_psr_multicoordinate --seeds 100
 ```
 
 [Summary](results/full_psr_multicoordinate/full_psr_multicoordinate_summary.csv)
 · [Per-run results](results/full_psr_multicoordinate/full_psr_multicoordinate_runs.csv)
+· [Four-method summary](results/full_psr_multicoordinate/full_psr_baseline_summary.csv)
+· [Baseline per-run results](results/full_psr_multicoordinate/full_psr_baseline_runs.csv)
 
 ## Rank, horizon, and reward reuse
 

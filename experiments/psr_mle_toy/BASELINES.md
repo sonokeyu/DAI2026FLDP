@@ -141,10 +141,15 @@ Median episode costs were 33 million and 132 million, respectively.
 
 The continuous-truth condition draws each branch probability independently
 from [0.2, 0.4] while retaining the finite endpoint class for fitting. It is
-deliberately misspecified. All 200 runs stopped, while median TV was 0.0688
-and the 90th percentile was 0.0882. Only 15% of epsilon 0.2 runs and 1% of
-epsilon 0.1 runs met the epsilon/4 target. The run data and reproduction
-command are in [`EXPERIMENTS.md`](EXPERIMENTS.md).
+deliberately misspecified. The four-method comparison is in
+[`full_psr_baseline_summary.csv`](results/full_psr_multicoordinate/full_psr_baseline_summary.csv).
+All runs stopped. In the realizable cells, all methods had TV zero. At
+epsilon 0.1, median episodes were 132 million for ours, 1,051 for OMLE,
+28,548 for uniform + MLE, and 14,131 for count + MLE. Under continuous truth,
+median TV ranged from 0.0688 to 0.0703 at epsilon 0.2 and from 0.0688 to
+0.0694 at epsilon 0.1. Only 15% and 1% of runs, respectively, met the
+epsilon/4 target. The two exploration baselines fit once after meeting their
+sampling rule, while OMLE searches after each pair of episodes.
 
 Reproduce these runs with:
 
