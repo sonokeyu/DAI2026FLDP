@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480">
+<style>text{font-family:Arial,sans-serif;fill:#25313d}.grid{stroke:#e3e9ed}.line{fill:none;stroke-width:2.7}</style>
+<rect width="900" height="480" fill="white"/>
+<text x="72" y="35" font-size="20" font-weight="bold">Ours: fitted bonus and stopping threshold</text>
+<line class="grid" x1="80" y1="390.0" x2="850" y2="390.0"/>
+<text x="70" y="394.0" text-anchor="end" font-size="11">0.00</text>
+<line class="grid" x1="80" y1="326.0" x2="850" y2="326.0"/>
+<text x="70" y="330.0" text-anchor="end" font-size="11">0.10</text>
+<line class="grid" x1="80" y1="262.0" x2="850" y2="262.0"/>
+<text x="70" y="266.0" text-anchor="end" font-size="11">0.21</text>
+<line class="grid" x1="80" y1="198.0" x2="850" y2="198.0"/>
+<text x="70" y="202.0" text-anchor="end" font-size="11">0.31</text>
+<line class="grid" x1="80" y1="134.0" x2="850" y2="134.0"/>
+<text x="70" y="138.0" text-anchor="end" font-size="11">0.42</text>
+<line class="grid" x1="80" y1="70.0" x2="850" y2="70.0"/>
+<text x="70" y="74.0" text-anchor="end" font-size="11">0.52</text>
+<line x1="80" y1="359.5" x2="850" y2="359.5" stroke="#c43d35" stroke-dasharray="5 4"/>
+<text x="845" y="352.5" text-anchor="end" font-size="11">stop at ε/4 = 0.05</text>
+<polyline class="line" points="80.0,70.0 106.6,227.6 133.1,274.8 159.7,295.8 186.2,308.5 212.8,317.1 239.3,323.4 265.9,328.4 292.4,332.3 319.0,335.6 345.5,338.4 372.1,340.8 398.6,342.9 425.2,344.8 451.7,346.4 478.3,347.9 504.8,349.2 531.4,350.4 557.9,351.6 584.5,352.6 611.0,353.5 637.6,354.4 664.1,355.2 690.7,356.0 717.2,356.7 743.8,357.4 770.3,358.0 796.9,358.6 823.4,359.2 850.0,359.7" stroke="#2369a8"/>
+<line x1="90" y1="435" x2="115" y2="435" stroke="#2369a8" stroke-width="3"/>
+<text x="122" y="439" font-size="12">H=8</text>
+<text x="465" y="470" text-anchor="middle" font-size="12">Episodes</text></svg>

@@ -1,0 +1,5 @@
+horizon,method,runs,episode_ceiling,epsilon,stop_rate,target_rate,mean_tv,median_episodes,median_mle_calls,median_planning_calls,median_joint_calls,first_hit_rate,median_first_hit_episodes,mean_success_regret,certificate_audit_rate
+8,ours,16,131072,0.2,1,1,0.0011071687499999959,118784.0,30.0,30.0,0.0,1.0,2048.0,0.0,1
+8,omle,16,4096,0.2,1,1,0.01771469999999999,101.0,0.0,0.0,50.5,1.0,64.0,0.0,
+8,uniform,16,4096,0.2,0,0.75,0.07299112499999998,4096.0,64.0,0.0,0.0,1.0,160.0,0.05572749374999998,
+8,count,16,4096,0.2,0,0.75,0.07759858724999996,4096.0,64.0,0.0,0.0,1.0,96.0,0.05609654999999997,

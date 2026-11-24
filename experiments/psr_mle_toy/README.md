@@ -1,5 +1,9 @@
 # Three-stage PSR MLE toy experiment
 
+[Partially observed combination-lock experiment](COMBINATION_LOCK.md) gives
+the newer four-method comparison on a deeper POMDP, with exact all-policy TV,
+episode costs, oracle calls, and a specialized bonus stopping certificate.
+
 [Theory validation](THEORY_VALIDATION.md) reports the oracle interfaces,
 call counts, and stopping certificate under the paper’s assumptions.
 

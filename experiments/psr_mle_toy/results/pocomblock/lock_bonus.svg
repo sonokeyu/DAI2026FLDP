@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480">
+<style>text{font-family:Arial,sans-serif;fill:#25313d}.grid{stroke:#e3e9ed}.line{fill:none;stroke-width:2.7}</style>
+<rect width="900" height="480" fill="white"/>
+<text x="72" y="35" font-size="20" font-weight="bold">Ours: fitted bonus and stopping threshold</text>
+<line class="grid" x1="80" y1="390.0" x2="850" y2="390.0"/>
+<text x="70" y="394.0" text-anchor="end" font-size="11">0.00</text>
+<line class="grid" x1="80" y1="326.0" x2="850" y2="326.0"/>
+<text x="70" y="330.0" text-anchor="end" font-size="11">0.12</text>
+<line class="grid" x1="80" y1="262.0" x2="850" y2="262.0"/>
+<text x="70" y="266.0" text-anchor="end" font-size="11">0.23</text>
+<line class="grid" x1="80" y1="198.0" x2="850" y2="198.0"/>
+<text x="70" y="202.0" text-anchor="end" font-size="11">0.35</text>
+<line class="grid" x1="80" y1="134.0" x2="850" y2="134.0"/>
+<text x="70" y="138.0" text-anchor="end" font-size="11">0.47</text>
+<line class="grid" x1="80" y1="70.0" x2="850" y2="70.0"/>
+<text x="70" y="74.0" text-anchor="end" font-size="11">0.58</text>
+<line x1="80" y1="362.6" x2="850" y2="362.6" stroke="#c43d35" stroke-dasharray="5 4"/>
+<text x="845" y="355.6" text-anchor="end" font-size="11">stop at ε/4 = 0.05</text>
+<polyline class="line" points="80.0,70.0 104.8,238.9 129.7,283.1 154.5,302.7 179.4,314.4 204.2,322.4 229.0,328.3 253.9,332.9 278.7,336.6 303.5,339.6 328.4,342.2 353.2,344.4 378.1,346.4 402.9,348.1 427.7,349.6 452.6,351.0 477.4,352.2 502.3,353.3 527.1,354.4 551.9,355.3 576.8,356.2 601.6,357.0 626.5,357.8 651.3,358.5 676.1,359.1 701.0,359.8 725.8,360.4 750.6,360.9 775.5,361.4 800.3,361.9 825.2,362.4 850.0,362.8" stroke="#2369a8"/>
+<line x1="90" y1="435" x2="115" y2="435" stroke="#2369a8" stroke-width="3"/>
+<text x="122" y="439" font-size="12">H=4</text>
+<polyline class="line" points="80.0,102.0 104.8,245.7 129.7,287.6 154.5,306.4 179.4,317.6 204.2,325.2 229.0,330.9 253.9,335.3 278.7,338.8 303.5,341.7 328.4,344.2 353.2,346.3 378.1,348.2 402.9,349.8 427.7,351.3 452.6,352.6 477.4,353.8 502.3,354.9 527.1,355.9 551.9,356.8 576.8,357.6 601.6,358.4 626.5,359.1 651.3,359.8 676.1,360.4 701.0,361.0 725.8,361.6 750.6,362.1 775.5,362.6" stroke="#438e5a"/>
+<line x1="260" y1="435" x2="285" y2="435" stroke="#438e5a" stroke-width="3"/>
+<text x="292" y="439" font-size="12">H=6</text>
+<polyline class="line" points="80.0,102.0 104.8,248.9 129.7,290.1 154.5,308.4 179.4,319.3 204.2,326.8 229.0,332.3 253.9,336.6 278.7,340.0 303.5,342.9 328.4,345.3 353.2,347.4 378.1,349.2 402.9,350.8 427.7,352.2 452.6,353.5 477.4,354.7 502.3,355.7 527.1,356.7 551.9,357.6 576.8,358.4 601.6,359.1 626.5,359.9 651.3,360.5 676.1,361.1 701.0,361.7 725.8,362.3 750.6,362.8" stroke="#9b59b6"/>
+<line x1="430" y1="435" x2="455" y2="435" stroke="#9b59b6" stroke-width="3"/>
+<text x="462" y="439" font-size="12">H=8</text>
+<text x="465" y="470" text-anchor="middle" font-size="12">Episodes</text></svg>
