@@ -1,6 +1,7 @@
 \documentclass[sigconf,nonacm]{acmart}
 \usepackage{amsmath,mathtools}
 \usepackage{enumitem}
+\usepackage{graphicx,tabularx}
 \floatstyle{ruled}
 \newfloat{algorithm}{t}{loa}
 \floatname{algorithm}{Algorithm}
@@ -57,7 +58,14 @@ In this paper, we address the computational cost of reward-free exploration thro
 \begin{center}
 \itshape Can we learn a PSR accurate under every policy using ordinary MLE and single-model planning, with calls growing nearly as rank times horizon?
 \end{center}
-We answer this question affirmatively for finite realizable classes of uniformly B-stable PSRs. A PSR prediction describes an experiment the learner can perform. From one fit and the histories observed so far, we construct a reward whose expected value bounds the trajectory prediction error of each policy. Maximizing this reward in the fit yields either a certificate of uniform accuracy or a policy and a test to execute in the environment. A subsequent fit may assign new predictive coordinates to every stored history. We show that the information from successive tests nevertheless accumulates in the fixed predictive space of the true system. This gives a high-probability bound of $\softO(rH)$ calls each to ordinary MLE and single-model planning, where $r$ is the unknown true reachable rank.
+We answer this question affirmatively for finite realizable classes of uniformly B-stable PSRs. A PSR prediction describes an experiment the learner can perform. From one fit and the histories observed so far, we construct a reward whose expected value bounds the trajectory prediction error of each policy. Maximizing this reward in the fit yields either a certificate of uniform accuracy or a policy and a test to execute in the environment. A subsequent fit may assign new predictive coordinates to every stored history. We show that the information from successive tests nevertheless accumulates in the fixed predictive space of the true system. This gives a high-probability bound of $\softO(rH)$ calls each to ordinary MLE and single-model planning, where $r$ is the unknown true reachable rank. Figure~\ref{fig:overview} shows the exploration task, the test chosen by one fit, and the resulting refit schedule.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{intro-figure.pdf}
+\caption{Reward-free exploration must cover trajectories useful for goals revealed later. One fitted PSR selects a diagnostic for an uncertain prediction. Several episodes are collected under that fit before the next update. Ticks in (c) depict model updates.}
+\label{fig:overview}
+\end{figure*}
 
 \subsection{Overview of results}
 Consider a finite realizable class of PSRs with common known core tests and a uniform B-stability bound \cite{bstable}. The core tests supply predictive coordinates. B-stability controls how an error in those coordinates propagates into predictions about the rest of the episode. Write $r$ for the maximum, over stages, of the dimension spanned by reachable predictive states in the true system, and $H$ for the horizon. One oracle fits a model by ordinary MLE on the complete episode logs. The other plans for a bounded trajectory reward in a single specified model.
@@ -151,7 +159,23 @@ To see the consequence of uniformity, let $\pi^\star$ be optimal under the truth
  V_{\st,R}^{\pi^\star}-V_{\st,R}^{\hat\pi}
  \le \Delta+\eps/2+\Delta .
 \]
-Uniformity covers both policies in this inequality.
+Uniformity covers both policies in this inequality. Table~\ref{tab:comparison} compares the exploration computations and update schedules of related approaches.
+
+\begin{table*}[t]
+\caption{Exploration objectives and model-update schedules for uniform trajectory accuracy.}
+\label{tab:comparison}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}X p{0.27\textwidth}@{}}
+\toprule
+Method & Exploration computation & Model-update schedule \\
+\midrule
+Reward-free OMLE \cite{omle} & Joint search over two plausible models and a disagreement-maximizing policy & Updated each exploration round \\
+All-Policy E2D \cite{bstable} & Minimax optimization over distributions of policies and output models & New optimization in each episode \\
+PSR-UCB \cite{psrucb} & Prefix-constrained model fit and bonus planning in one model & One update per batch of $H$ episodes \\
+This work & Ordinary MLE and reward planning in one fitted model & $\softO(rH)$ calls to each oracle in total \\
+\bottomrule
+\end{tabularx}
+\end{table*}
 
 \paragraph{Sample cost of uniform trajectory accuracy.}
 All-Policy Model-Estimation E2D obtains the guarantee in Corollary~\ref{cor:reward} by solving a minimax problem over distributions of exploration policies and output models each episode \cite[Theorem~H.4]{bstable}. Its episode bound has structural factor $dAU\Lambda_B^2H^2$, where $d$ bounds the rank of every candidate. Our bound depends on the reachable rank $r$ of the true system. At equal ranks, suppressing likelihood and logarithmic factors, our bound costs an extra factor $\Lambda_B^2UH^2$ and uses $\softO(rH)$ calls each to ordinary MLE and single-model planning. Section~\ref{sec:progress} traces the extra factor to the accuracy needed to test a fitted direction.

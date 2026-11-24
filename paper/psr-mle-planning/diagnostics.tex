@@ -39,7 +39,7 @@ Write $D_h^u,D_h^w$ for following $\pi$ up to stage $h$ and then using the indic
  \rho=\tfrac13\pi+\tfrac{1}{3H}\sum_{h=1}^H(D_h^u+D_h^w).
  \label{eq:rho}
 \end{equation}
-The first component measures whether $\pi$ visits different histories in the two models. The other components measure differences in the predictions attached to those histories.
+Each diagnostic follows $\pi$ to its selected stage, so its complete log records both the history reached and the outcome of the selected test. The full-policy component also records the unmodified trajectory.
 
 \subsection{Transferring the fitted bonus to the real system}
 Fix the data and a policy $\pi$. Even with identical physical core coordinates, replacing the fit by the truth changes two mathematical objects. The sampling measure on prefixes changes. At any prefix reached by both models, the values of the lifted coordinates can also change. There is a third issue specific to a data-dependent support: its historical constraint was imposed with fitted feature rows. We first transport that constraint on the stored prefixes. Then we bound the discrepancy of the selected scores on the current policy's prefixes.
@@ -52,43 +52,34 @@ To compare support functions, use the same stored prefixes in the true represent
 Let $b_{\st,k}(\tau)$ be the support of this set at the concatenated true features: maximize $v_0+\sum_h g_{v_h}(\phi_h^\st(\tau_{h-1}))$. From \eqref{eq:drift} every tuple feasible in the separate fitted programs belongs to this true set. Indeed its total fitted energy is at most $LS$ and its total squared drift is at most $8Y\beta$ by Lemma~\ref{lem:mle}. Apply $(a+b)^2\le2a^2+2b^2$. This inclusion is uniform over tuples, so it holds when each stage optimizer is selected at the queried prefix.
 
 \paragraph{On-policy and intervened observations.}
-If the planner always picks mode $b$ at the right station, trajectory data from that choice have no power to detect the wrong success probability for mode $a$ in \sect{sec:example}. The transition block of $v$ can nevertheless put a large weight on $a$. Running the $w$ diagnostic samples just such a counterfactual action. Conversely, two models may agree on every diagnostic continuation at the histories where it starts, but disagree on the probability of reaching those histories. Running $\pi$ through the full horizon tests the change of measure. These two comparisons explain the mixture components in \eqref{eq:rho}.
+If the planner always picks mode $b$ at the right station, trajectory data from that choice have no power to detect the wrong success probability for mode $a$ in \sect{sec:example}. The transition block of $v$ can nevertheless put a large weight on $a$. Running the $w$ diagnostic samples just such a counterfactual action. Each diagnostic log also records the roll-in under $\pi$, so the law of the complete experiment reflects changes in the probability of reaching its starting history.
 
 \begin{proposition}[Diagnostic transfer]\label{prop:transfer}
 For the attained numerical reward $\widetilde b_k$, any frozen $\pi$, and its controller \eqref{eq:rho}, on the calibration event,
 \begin{equation}
  \E_{\wh\theta_k,\pi}\widetilde b_k
  \le \E_{\st,\pi} b_{\st,k}
-       +6HW\,\TV(P_{\wh\theta_k}^\rho,P_\st^\rho).
+       +3HW\,\TV(P_{\wh\theta_k}^\rho,P_\st^\rho).
  \label{eq:transfer}
 \end{equation}
 \end{proposition}
 \begin{proof}
-Write $t_\nu=\TV(P_{\wh\theta_k}^\nu,P_\st^\nu)$ for the joint experiment distance. Freeze the deterministic rule $x\mapsto v_h(x)$ that attains each numerical lower value. In particular, applying it to the same recorded prefix yields the same test in either environment.
-
-\emph{Change the law of the visited prefix.} The function $\widetilde b_k$ can be evaluated on any physical trajectory with the same fit and stored data. Since it lies in $[0,LW]$,
+Write $t_\nu=\TV(P_{\wh\theta_k}^\nu,P_\st^\nu)$ for the distance between complete logged experiments. Freeze the deterministic rule $x\mapsto v_h(x)$ that attains each numerical lower value, including its diagnostic controller and score. For $s\in\{u,w\}$ let $Z_h^s$ be the score returned by $D_h^s$; it lies in $[-W/2,W/2]$. The defining conditional means of these scores, followed by averaging over the roll-in, give
 \[
  \E_{\wh\theta_k,\pi}\widetilde b_k
- \le \E_{\st,\pi}\widetilde b_k+LWt_\pi .
+ \le v_0+\sum_{h=1}^H\sum_{s\in\{u,w\}}
+      \E_{\wh\theta_k,D_h^s} Z_h^s.
 \]
-The fitted model still supplies the features inside the expectation on the right.
-
-\emph{Change the features at a common prefix.} At a true trajectory take the realized tuple of selected coefficients and evaluate it on the true features. Its summed value is bounded by $b_{\st,k}$ because the historical inclusion proved above holds for every tuple. The error in this replacement is at most the sum of the absolute current-block and transition-block discrepancies. By \eqref{eq:scored}, each is a difference in conditional expectations of a common score in $[-W/2,W/2]$. It costs at most $W$ times the TV of the corresponding conditional experiment.
-
-\emph{Average over observable experiments.} Let $P,Q$ now be joint laws of a prefix and its diagnostic continuation. Inserting the intermediate measure $P_X Q_{Z\mid X}$ and using the triangle inequality gives
-\begin{align*}
- \E_{P_X}\TV(P_{Z\mid X},Q_{Z\mid X})
- &\le \TV(P_{XZ},Q_{XZ})+\TV(P_X,Q_X)\\
- &\le 2\TV(P_{XZ},Q_{XZ}).
-\end{align*}
-Thus we can pay for a conditional discrepancy at a randomly encountered prefix using the TV of a complete, executable experiment. Adding across the stages gives the bound
+At a true trajectory, the tuple chosen at its visited prefixes is feasible in $\mathcal V_{\st,k}$. Its value is therefore at most $b_{\st,k}$ pointwise, and hence
 \[
- LWt_\pi+2W\sum_h(t_{D_h^u}+t_{D_h^w})
+ v_0+\sum_{h=1}^H\sum_{s\in\{u,w\}}
+      \E_{\st,D_h^s} Z_h^s
+ \le \E_{\st,\pi}b_{\st,k}.
 \]
-on the total transfer cost. Let $S_D=\sum_h(t_{D_h^u}+t_{D_h^w})$. The mixture label is observed, so $3t_\rho=t_\pi+S_D/H$. Since $L=H+1\le2H$, the transfer cost satisfies $LWt_\pi+2WS_D\le6HWt_\rho$. This proves \eqref{eq:transfer}.
+Because the same frozen score is evaluated on each pair of logged experiment laws and its range has width $W$, the difference of its expectations is at most $Wt_{D_h^s}$. Thus the transfer cost is at most $WS_D$, where $S_D=\sum_h(t_{D_h^u}+t_{D_h^w})$. The mixture label in \eqref{eq:rho} is observed, so $3t_\rho=t_\pi+S_D/H$. Consequently $WS_D\le3HWt_\rho$, as claimed.
 \end{proof}
 
-Put $\tau_0=\eps/8$ and $\eta=\tau_0/(12HW)$. A nonstopping round has fitted bonus value above $\tau_0$ with the stated simulation accuracy. Proposition~\ref{prop:transfer} then implies
+Put $\tau_0=\eps/8$ and $\eta=\tau_0/(6HW)$. A nonstopping round has fitted bonus value above $\tau_0$ with the stated simulation accuracy. Proposition~\ref{prop:transfer} then implies
 \begin{equation}
  \E_{\st,\pi^k}b_{\st,k}\ge\tau_0/2
  \quad\text{or}\quad
