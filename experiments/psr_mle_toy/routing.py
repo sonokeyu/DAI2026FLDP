@@ -241,6 +241,14 @@ class Budget:
     epsilon: float
     delta: float = 0.1
     candidates: int = 2
+    horizon: int = H
+    score_bound: float = W
+    risk_scale: float = Y
+    dimension: int = D
+
+    @property
+    def stages_with_initial(self):
+        return self.horizon + 1
 
     @property
     def beta(self):
@@ -248,7 +256,7 @@ class Budget:
 
     @property
     def energy(self):
-        return 8 * Y * self.beta
+        return 8 * self.risk_scale * self.beta
 
     @property
     def tau(self):
@@ -256,27 +264,31 @@ class Budget:
 
     @property
     def eta(self):
-        return self.tau / (6 * H * W)
+        return self.tau / (6 * self.horizon * self.score_bound)
 
     @property
     def historical_energy(self):
-        return 2 * L * self.energy + 16 * Y * self.beta
+        return 2 * self.stages_with_initial * self.energy + 16 * self.risk_scale * self.beta
 
     def theory_training(self, round_number):
         # c=64 gives mean clipped leverage >=16 log(64 L (k+1)^2 / delta).
         # Chernoff at half the mean gives a summable tail within delta/3.
         c = 64
-        scale = max(2 * self.historical_energy, L * L * W * W)
-        return ceil(c * scale / self.tau ** 2 * log(c * L * (round_number + 1) ** 2 / self.delta))
+        stages = self.stages_with_initial
+        scale = max(2 * self.historical_energy, (stages * self.score_bound) ** 2)
+        return ceil(c * scale / self.tau ** 2 * log(c * stages * (round_number + 1) ** 2 / self.delta))
 
     def theory_nested(self):
-        return ceil(128 * 24 * Y * L * self.beta / self.eta ** 2)
+        return ceil(128 * 24 * self.risk_scale * self.stages_with_initial * self.beta / self.eta ** 2)
 
-    def cap(self):
+    def cap(self, rank_bound=None):
+        width = self.dimension if rank_bound is None else rank_bound
+        stages = self.stages_with_initial
+        scale = width ** 2 * stages * self.score_bound ** 2
         k = 1
-        while k * log(2) <= D * L * (
-                log1p(k * self.theory_training(k) * D ** 2 * L * W ** 2 / self.historical_energy)
-                + log1p(128 * k * D ** 2 * L * W ** 2 / self.eta ** 2)):
+        while k * log(2) <= width * stages * (
+                log1p(k * self.theory_training(k) * scale / self.historical_energy)
+                + log1p(128 * k * scale / self.eta ** 2)):
             k *= 2
         return k
 
@@ -287,6 +299,13 @@ REWARDS = {
     "safe_processing": lambda e: (0.5 if e.mode == "b" else e.outcome) if e.cue == "-" else 0,
     "failure": lambda e: 1 - e.outcome,
 }
+
+
+def fit_mle(log_likelihoods, counts):
+    """Unconstrained maximum likelihood with a fixed candidate tie rule."""
+    observed = counts > 0
+    scores = log_likelihoods[:, observed] @ counts[observed]
+    return int(scores.argmax())
 
 
 def run_algorithm(models, truth_index, epsilon, seed, condition="nested",
@@ -311,10 +330,7 @@ def run_algorithm(models, truth_index, epsilon, seed, condition="nested",
             raise ValueError("fixed budget needs a positive multiple of a complete block")
         limit = 1 + total // step
     for k in range(1, limit + 1):
-        occupied = counts > 0
-        scores = models_log[:, occupied] @ counts[occupied]
-        # Fixed tie preference for candidate zero, independent of truth.
-        choice = int(scores.argmax())
+        choice = fit_mle(models_log, counts)
         fit = models[choice]
         b, policy, queries = plan_bonus(fit, histories, budget.energy)
         stopped = b <= 3 * epsilon / 16

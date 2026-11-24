@@ -1,8 +1,10 @@
 """Algorithm 1 on deterministic observable Markov chains with fixed D."""
 from itertools import product
-from math import ceil, log
+from math import ceil
 
 import numpy as np
+
+from routing import Budget
 
 DIMENSION = 8
 CANDIDATE_RANKS = (1, 2, 4)
@@ -59,7 +61,7 @@ def collect(model, action_probs, count, rng, observed, buffer=None, stage=None):
         np.add.at(visits, model.ravel(), actions.ravel())
 
 
-def run_rank_case(horizon, truth_rank, epsilon, seed):
+def run_rank_case(horizon, truth_rank, epsilon, seed, *, theory=False):
     models = [transition(r) for r in CANDIDATE_RANKS]
     # Tie toward a larger model. Every candidate is given on every run.
     models.reverse()
@@ -67,20 +69,25 @@ def run_rank_case(horizon, truth_rank, epsilon, seed):
     rng = np.random.default_rng(seed)
     observed = np.full_like(truth, -1)
     buffer = np.zeros((horizon - 1, *truth.shape), dtype=np.int64)
-    energy = 8 * 2 * log(3 * len(models) / 0.1)  # W=1, Lambda_B=1, U=1.
-    m = ceil(16_000 * (horizon + 1) / epsilon ** 2)
-    episodes = 0
-    for k in range(1, 129):
+    # Observable singleton core tests have Lambda_B=1, U=1, and A=2.
+    budget = Budget(epsilon, candidates=len(models), horizon=horizon,
+                    score_bound=1.0, risk_scale=2.0, dimension=DIMENSION)
+    energy = budget.energy
+    cap = budget.cap() if theory else 128
+    training_count = episodes = 0
+    for k in range(1, cap + 1):
+        m = budget.theory_training(k) if theory else ceil(16_000 * (horizon + 1) / epsilon ** 2)
+        n = budget.theory_nested() if theory else m
         sampled = observed >= 0
         fit = next(model for model in models if (model[sampled] == observed[sampled]).all())
         frequencies = np.zeros((horizon, DIMENSION), dtype=np.int64)
-        frequencies[0, 0] = (k - 1) * m
+        frequencies[0, 0] = training_count
         for h, samples in enumerate(buffer, start=1):
             np.add.at(frequencies[h], fit.ravel(), samples.ravel())
         bonus = np.minimum(1.0, np.sqrt(energy / np.maximum(1, frequencies)))
         b, policy = optimal_bonus(fit, bonus)
         b += bonus[0, 0]  # Separate initial-core certificate.
-        if b <= 3 * epsilon / 16 or k == 128:
+        if b <= 3 * epsilon / 16 or k == cap:
             reachable = {0}
             tv = 0.0
             for _ in range(horizon - 1):
@@ -89,10 +96,15 @@ def run_rank_case(horizon, truth_rank, epsilon, seed):
                     tv = 1.0
                     break
                 reachable = {int(fit[s, a]) for s, a in pairs}
-            return dict(horizon=horizon, rank=max(reachable_ranks(truth, horizon)),
-                        dimension=DIMENSION, epsilon=epsilon, batch=m, seed=seed,
-                        stopped=bool(b <= 3 * epsilon / 16), bonus=b, policy_tv=tv,
-                        episodes=episodes, mle_calls=k, exploration_plans=k)
+            result = dict(horizon=horizon, rank=max(reachable_ranks(truth, horizon)),
+                          dimension=DIMENSION, epsilon=epsilon, batch=m, seed=seed,
+                          stopped=bool(b <= 3 * epsilon / 16), bonus=b, policy_tv=tv,
+                          episodes=episodes, mle_calls=k, exploration_plans=k)
+            if theory:
+                # True rank is measured here, after all learning decisions.
+                result.pop("batch")
+                result.update(known_dimension_cap=cap, true_rank_cap=budget.cap(result["rank"]))
+            return result
 
         # Each current-core test just observes the current state. Its
         # completion uses action 0. The other branch uses a uniform action.
@@ -112,8 +124,9 @@ def run_rank_case(horizon, truth_rank, epsilon, seed):
         weights = [1 / 3, *[1 / (3 * horizon)] * (2 * horizon)]
         cuts = [fixed, *(component(horizon, design, h, 0.5)
                          for h in range(horizon - 1) for design in rho)]
-        sizes = rng.multinomial(m, [1 / horizon, *[w / horizon
+        sizes = rng.multinomial(n, [1 / horizon, *[w / horizon
                                  for _ in range(horizon - 1) for w in weights]])
         for design, size in zip(cuts, sizes):
             collect(truth, design, size, rng, observed)
-        episodes += (horizon + 2) * m
+        training_count += m
+        episodes += (horizon + 1) * m + n

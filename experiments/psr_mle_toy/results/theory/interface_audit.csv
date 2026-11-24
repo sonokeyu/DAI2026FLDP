@@ -1,0 +1,6 @@
+candidates,omle_joint_calls,omle_model_pairs_scored,ours_mle_calls,ours_planning_calls,ours_mle_candidates_scored,ours_models_passed_to_planner,ours_model_pairs_scored
+2,1,1,1,1,2,1,0
+4,1,6,1,1,4,1,0
+8,1,28,1,1,8,1,0
+16,1,120,1,1,16,1,0
+32,1,496,1,1,32,1,0

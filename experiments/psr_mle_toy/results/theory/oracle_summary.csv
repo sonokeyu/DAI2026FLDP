@@ -1,0 +1,9 @@
+epsilon,target_tv,method,reached,episodes,joint_calls,confidence_updates,median_nontrivial_joint_calls,worst_truth_success,episodes_cap,ordinary_mle_calls,single_model_plans,stops,false_stops,runs,max_stop_tv
+0.4,0.1,omle,True,30,15,15,15.0,0.9,16384,,,,,200,
+0.4,0.1,ours,True,427648271078.0,0,0,0,1.0,,3.0,3.0,200,0,200,0.0
+0.2,0.05,omle,True,138,69,69,69.0,0.91,16384,,,,,200,
+0.2,0.05,ours,True,1710593084286.0,0,0,0,1.0,,3.0,3.0,200,0,200,0.0
+0.1,0.025,omle,True,784,392,392,392.0,0.9,16384,,,,,200,
+0.1,0.025,ours,True,6842372337134.0,0,0,0,1.0,,3.0,3.0,200,0,200,0.0
+0.05,0.0125,omle,True,1946,973,973,973.0,0.91,16384,,,,,200,
+0.05,0.0125,ours,True,27369489348528.0,0,0,0,1.0,,3.0,3.0,200,0,200,0.0
