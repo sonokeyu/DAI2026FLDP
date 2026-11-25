@@ -1,5 +1,9 @@
 # Three-stage PSR MLE toy experiment
 
+[64-hidden-state POMDP experiment](QUEUE_POMDP.md) tests a length-three
+predictive core, continuous MLE, single-model bonus planning, and exact
+all-policy TV at reachable rank 16.
+
 [Multi-stage PSR experiment](MULTISTAGE_POMDP.md) runs the finite-class
 ordinary-MLE exploration loop on rank-controlled noisy POMDPs at horizons 3–5, with exact
 all-policy TV audits and four-method results.
