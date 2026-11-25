@@ -89,3 +89,24 @@ number for this continuous class. Consequently the observed stopping
 inequality is an empirical audit, **not** a theorem-level confidence
 certificate. There is no exact continuous-class OMLE joint-search
 baseline in this scale test.
+
+## Additional baselines
+
+Uniform random plus continuous MLE, observation-history count exploration
+plus continuous MLE, and a finite-grid OMLE approximation were also run
+on the same 64-state environment. Each used a budget of 256 physical
+episodes and four seeds; MLE was refit every 64 episodes. At this budget,
+uniform+MLE reached the target `TV <= ε/4` in 1/4 seeds, count+MLE in
+1/4, and finite-grid OMLE in 0/4. Their median final TVs were 0.1195,
+0.1198, and 0.1977 respectively. OMLE made 128 joint model-pair/policy
+searches per seed and did not stop before the budget ended.
+
+The OMLE model set contains 64 independently sampled grid points from
+`{0,.25,.5,.75,1}^12`; it excludes the true parameter. Its confidence
+set and max-TV pair search are exact **within this sampled grid**, while
+the continuous MLE controls use numerical multistart likelihood
+optimization. This is a practical finite-grid baseline, not an exact
+continuous-class OMLE guarantee. Its sample budget is much smaller than
+ours' stopping batches, so the comparison measures behavior at the stated
+budgets rather than equal-sample performance. See
+`queue_baselines_runs.csv` and `queue_baselines_summary.csv`.

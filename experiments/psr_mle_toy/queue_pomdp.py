@@ -92,7 +92,12 @@ class QueueModel:
         return float(mass.sum())
 
     def sample(self, policy, rng):
-        state = int(rng.choice(STATE_COUNT, p=INITIAL))
+        if hasattr(rng, "randrange"):
+            draw = rng.random()
+            state = next(i for i, probability in enumerate(np.cumsum(INITIAL))
+                         if draw < probability)
+        else:
+            state = int(rng.choice(STATE_COUNT, p=INITIAL))
         history = ()
         for stage in range(self.horizon):
             first = HIDDEN[state][0]

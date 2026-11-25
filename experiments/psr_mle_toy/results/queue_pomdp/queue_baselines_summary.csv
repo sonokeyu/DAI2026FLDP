@@ -1,0 +1,4 @@
+method,runs,success,median_tv,median_episodes,median_mle_calls,median_joint_calls,grid_size
+uniform,4,1,0.11950338281433256,256.0,4.0,0.0,
+count,4,1,0.11981406787298088,256.0,4.0,0.0,
+omle_grid,4,0,0.19767258559340622,256.0,0.0,128.0,64
