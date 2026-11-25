@@ -1,0 +1,5 @@
+method,runs,tv_at_budget,success,median_episodes,median_mle_calls,median_planning_calls,median_joint_calls
+ours,8,0.04763903566937431,7,384.0,3.0,3.0,0.0
+omle,8,0.034390654229458494,8,384.0,0.0,0.0,192.0
+uniform,8,0.0321927586500509,8,384.0,6.0,0.0,0.0
+count,8,0.030322033619253595,8,384.0,6.0,0.0,0.0

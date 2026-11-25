@@ -110,3 +110,32 @@ continuous-class OMLE guarantee. Its sample budget is much smaller than
 ours' stopping batches, so the comparison measures behavior at the stated
 budgets rather than equal-sample performance. See
 `queue_baselines_runs.csv` and `queue_baselines_summary.csv`.
+
+## Matched four-method comparison
+
+For a fairer comparison, we also ran all four methods on one shared finite
+class of 25 models. It contains the true 12-parameter model and 24 models
+that differ from it in one parameter by a large amount. Each method sees
+the same class. Ours, uniform+MLE, and count+MLE use exact ordinary MLE
+over these 25 models. OMLE performs its exact confidence-set and
+all-policy pair search within that class. The run uses eight paired seeds,
+ε=0.4, and a common cap of 384 physical episodes. Ours keeps its batch
+schedule and refits after each 192 collected episodes. The baselines
+retain their own updates. The TV curve carries each method's latest fit
+forward to each shared episode checkpoint.
+
+At 384 episodes, the median worst-policy TV was 0.0476 for ours, 0.0344
+for OMLE, 0.0322 for uniform+MLE, and 0.0303 for count+MLE. The methods
+met `TV <= ε/4 = 0.1` in 7/8, 8/8, 8/8, and 8/8 seeds respectively.
+Ours made 3 MLE and 3 single-model planning calls. The controls made 6
+MLE calls. OMLE made 192 joint model-pair/policy searches. Every method
+used the same episode budget, and all TV evaluations were exact over the
+full observation-history policy class.
+
+The shared candidate set is deliberately small. It tests whether methods
+can distinguish models that differ in a hidden-state-specific transition
+parameter. Its 25 models do not cover the full continuous family. Results
+therefore establish a matched comparison on this finite 64-state task,
+while the continuous batch sweep above remains the larger-class stress
+test. Raw paths and aggregates are in `matched/matched_runs.csv` and
+`matched/matched_summary.csv`. The plot is `matched/matched_tv.pdf`.
