@@ -39,7 +39,7 @@ unnormalized latent masses. This TV is never supplied to the learners.
 Install dependencies into the project environment and run:
 
 ```sh
-UV_CACHE_DIR=/tmp/psr-uv-cache uv pip install --python .venv/bin/python cvxpy matplotlib
+UV_CACHE_DIR=/tmp/psr-uv-cache uv pip install --python .venv/bin/python cvxpy matplotlib scipy
 .venv/bin/python -B experiments/psr_mle_toy/run_multistage_experiment.py \
   --output experiments/psr_mle_toy/results/multistage_pomdp \
   --horizons 3 4 5 --epsilons .1 .05 --seeds 4 \
@@ -47,6 +47,11 @@ UV_CACHE_DIR=/tmp/psr-uv-cache uv pip install --python .venv/bin/python cvxpy ma
 .venv/bin/python -B experiments/psr_mle_toy/run_multistage_call_scaling.py \
   --output experiments/psr_mle_toy/results/multistage_pomdp \
   --seeds 2 --base-batch 10000000 --rounds 16
+.venv/bin/python -B experiments/psr_mle_toy/run_multistage_call_budget.py \
+  --output experiments/psr_mle_toy/results/multistage_pomdp --seeds 3
+.venv/bin/python -B experiments/psr_mle_toy/run_continuous_ours.py \
+  --output experiments/psr_mle_toy/results/multistage_pomdp \
+  --seeds 4 --batch 10000000 --epsilon .1 --rounds 16
 MPLCONFIGDIR=/tmp/psr-mpl-cache .venv/bin/python -B \
   experiments/psr_mle_toy/plot_multistage.py \
   --input experiments/psr_mle_toy/results/multistage_pomdp \
@@ -133,3 +138,56 @@ exactly realizable and the first batch already identifies the truth;
 later rounds shrink the data-dependent bonus until it permits stopping.
 Detailed refit paths and summaries are in `call_scaling_runs.csv`,
 `call_scaling_final.csv`, and `call_scaling_summary.csv`.
+
+## Episodes for exactly 2–10 calls
+
+To isolate the call/sample tradeoff in one environment, hold H=4, r=2,
+and ε=.1 fixed, then change the batch size. Each entry below is reproduced
+with three seeds. Every run stops at the listed count, has zero final TV,
+and passes the exact-TV certificate audit. One nonstopping round uses
+`(H+2) × batch = 6 × batch` episodes in this fixed-batch design.
+
+| MLE calls | Planning calls | Batch, millions | Total episodes, millions |
+| ---: | ---: | ---: | ---: |
+| 2 | 2 | 35 | 210 |
+| 3 | 3 | 20 | 240 |
+| 4 | 4 | 12 | 216 |
+| 5 | 5 | 9 | 216 |
+| 6 | 6 | 7 | 210 |
+| 7 | 7 | 6 | 216 |
+| 8 | 8 | 5 | 210 |
+| 9 | 9 | 4.2 | 201.6 |
+| 10 | 10 | 4 | 216 |
+
+Thus reducing calls from ten to two did not reduce the total episode
+count here: the larger batch offset the saved updates. These are selected
+batch settings rather than an optimization of sample efficiency. The
+complete paths and summaries are in `call_budget_runs.csv`,
+`call_budget_final.csv`, and `call_budget_summary.csv`.
+
+## Dense continuous transition model
+
+Zero TV in the finite-class experiment is caused by exact identification
+of one candidate, not simply by having four hidden states. As a harder
+check, keep four hidden states and noisy observations but give each of
+three transition stages its own continuous mixture weight. The two
+endpoint kernels are dense, positive stochastic matrices; action 0 has
+the same kernel at both endpoints and therefore does not identify the
+weight. The reachable rank is four. The true weights are
+`(.23, .67, .42)` and belong to the continuous model class.
+
+With ε=.1, ten million episodes per training and diagnostic batch, and
+four seeds, ours stops after nine MLE and nine single-model planning calls
+in each run, at 480 million episodes. The final exact worst-policy TV is
+**nonzero in every run**, ranging from `2.32e-5` to `8.37e-5`. The initial
+fit has median TV `0.0480`. Every refit passes the ex-post inequality
+`TV <= bonus`, and the final bonus is about `0.0178`, below the stopping
+threshold `0.01875`. See `continuous_runs.csv`, `continuous_final.csv`,
+and `continuous_tv.pdf`.
+
+This continuous check uses multistart numerical likelihood maximization
+and an effective class size of 100 in the bonus program. That size is a
+**heuristic numerical calibration**, not a bracketing calculation for the
+continuous class. Therefore the observed inequality is an empirical
+audit, not a theorem-level confidence certificate. The continuous run
+does not include an exact OMLE joint-search comparator.

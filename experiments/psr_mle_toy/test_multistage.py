@@ -1,11 +1,14 @@
 """Independent checks for the multi-stage evaluator and PSR ranks."""
 from itertools import product
+from collections import Counter
 import unittest
 
 import numpy as np
 
 from multistage_pomdp import Model, candidates, worst_policy_tv
+from continuous_pomdp import ContinuousModel
 from multistage_psr import STABILITY, prefix_state
+from run_continuous_ours import fit_mle
 from run_multistage_ours import design_law
 
 
@@ -33,6 +36,20 @@ class MultiStageChecks(unittest.TestCase):
                     for observation, action in product(range(4), range(2))]
             self.assertEqual(np.linalg.matrix_rank(np.array(rows)), expected_rank)
             self.assertAlmostEqual(sum(design_law(model, {}).values()), 1.)
+
+    def test_continuous_mle_on_exact_random_policy_law(self):
+        truth = ContinuousModel((.23, .67))
+        states = [prefix_state(truth, (observation, action))
+                  for observation, action in product(range(4), range(2))]
+        self.assertEqual(np.linalg.matrix_rank(np.array(states)), 4)
+        counts = Counter()
+        for trace in product(range(4), range(2), range(4), range(2),
+                             range(4), range(2)):
+            probability = truth.trajectory_probability(trace) / 8
+            counts[trace] = round(10_000_000 * probability)
+        fitted, _, _ = fit_mle(counts, truth.horizon)
+        for actual, estimated in zip(truth.weights, fitted.weights):
+            self.assertAlmostEqual(actual, estimated, delta=.002)
 
 
 if __name__ == "__main__":

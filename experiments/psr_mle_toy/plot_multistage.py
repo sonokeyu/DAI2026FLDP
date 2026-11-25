@@ -142,6 +142,60 @@ def main():
         fig.savefig(args.output / "call_scaling.pdf")
         plt.close(fig)
 
+    budget_path = args.input / "call_budget_summary.csv"
+    if budget_path.exists():
+        with budget_path.open(newline="") as stream:
+            budget = sorted(csv.DictReader(stream),
+                            key=lambda row: int(row["target_calls"]))
+        calls = [int(row["target_calls"]) for row in budget]
+        episodes = [float(row["episodes_median"]) / 1e6 for row in budget]
+        batches = [float(row["batch"]) / 1e6 for row in budget]
+        fig, axis = plt.subplots(figsize=(6.5, 4.3))
+        bars = axis.bar(calls, episodes, color="#246a9b", alpha=.82,
+                        label="Total episodes")
+        axis.set(xlabel="MLE and planning calls each",
+                 ylabel="Total episodes (millions)", xticks=calls,
+                 title="H=4, r=2, ε=.1; three seeds")
+        axis.set_ylim(0, max(episodes) * 1.25)
+        for bar, value in zip(bars, episodes):
+            axis.text(bar.get_x() + bar.get_width() / 2, value + 2,
+                      f"{value:g}", ha="center", va="bottom", fontsize=8)
+        second = axis.twinx()
+        second.plot(calls, batches, color="#d37b28", marker="o",
+                    label="Episodes per batch")
+        second.set_ylabel("Episodes per training/diagnostic batch (millions)")
+        axis.grid(axis="y", alpha=.2)
+        axis.set_axisbelow(True)
+        fig.tight_layout()
+        fig.savefig(args.output / "call_budget.pdf")
+        plt.close(fig)
+
+    continuous_path = args.input / "continuous_runs.csv"
+    if continuous_path.exists():
+        with continuous_path.open(newline="") as stream:
+            continuous = list(csv.DictReader(stream))
+        rounds = sorted({int(row["round"]) for row in continuous})
+        tv = [median(float(row["tv"]) for row in continuous
+                     if int(row["round"]) == number) for number in rounds]
+        bonus = [median(float(row["bonus"]) for row in continuous
+                        if int(row["round"]) == number) for number in rounds]
+        fig, axis = plt.subplots(figsize=(6.5, 4.3))
+        axis.plot(rounds, tv, color="#246a9b", marker="o",
+                  label="Exact worst-policy TV")
+        axis.plot(rounds, bonus, color="#d37b28", marker="s",
+                  label="Fitted bonus")
+        axis.axhline(3 * float(continuous[0]["epsilon"]) / 16,
+                     color="#555555", linestyle="--", linewidth=1,
+                     label="Stopping threshold")
+        axis.set(xlabel="MLE and planning calls each", ylabel="Value (log scale)",
+                 yscale="log", xticks=rounds,
+                 title="Continuous, dense-kernel PSR; four seeds")
+        axis.grid(alpha=.2)
+        axis.legend(frameon=False, fontsize=8)
+        fig.tight_layout()
+        fig.savefig(args.output / "continuous_tv.pdf")
+        plt.close(fig)
+
 
 if __name__ == "__main__":
     main()
