@@ -106,6 +106,42 @@ def main():
     fig.savefig(args.output / "comparison.pdf")
     plt.close(fig)
 
+    scaling_path = args.input / "call_scaling_summary.csv"
+    if scaling_path.exists():
+        with scaling_path.open(newline="") as stream:
+            scaling = list(csv.DictReader(stream))
+        fig, axis = plt.subplots(figsize=(6.3, 4.5))
+        matched = all(
+            next(float(row["median_mle_calls"]) for row in scaling
+                 if int(row["horizon"]) == horizon and int(row["rank"]) == rank
+                 and float(row["epsilon"]) == .1)
+            == next(float(row["median_mle_calls"]) for row in scaling
+                    if int(row["horizon"]) == horizon and int(row["rank"]) == rank
+                    and float(row["epsilon"]) == .05)
+            for horizon in (3, 4, 5) for rank in (1, 2, 4))
+        for rank, color in ((1, "#246a9b"), (2, "#438e5a"), (4, "#a65b8b")):
+            for epsilon, style in ((.1, "-"),) if matched else ((.1, "-"), (.05, "--")):
+                group = sorted((row for row in scaling
+                                if int(row["rank"]) == rank
+                                and float(row["epsilon"]) == epsilon),
+                               key=lambda row: int(row["horizon"]))
+                axis.plot([int(row["horizon"]) for row in group],
+                          [float(row["median_mle_calls"]) for row in group],
+                          color=color, linestyle=style, marker="o",
+                          label=f"r={rank}" if matched else f"r={rank}, ε={epsilon}")
+        axis.set(xlabel="Horizon H", ylabel="MLE and planning calls each",
+                 title="Multi-round call scaling", xticks=[3, 4, 5])
+        if matched:
+            axis.text(.98, .03, "ε=.1 and .05 coincide\n(batch grows 4×)",
+                      transform=axis.transAxes, ha="right", va="bottom",
+                      fontsize=9, bbox={"facecolor": "white", "edgecolor": "none",
+                                        "alpha": .8})
+        axis.grid(alpha=.2)
+        axis.legend(frameon=False, fontsize=8, ncol=2)
+        fig.tight_layout()
+        fig.savefig(args.output / "call_scaling.pdf")
+        plt.close(fig)
+
 
 if __name__ == "__main__":
     main()

@@ -44,6 +44,13 @@ UV_CACHE_DIR=/tmp/psr-uv-cache uv pip install --python .venv/bin/python cvxpy ma
   --output experiments/psr_mle_toy/results/multistage_pomdp \
   --horizons 3 4 5 --epsilons .1 .05 --seeds 4 \
   --baseline-budget 1024
+.venv/bin/python -B experiments/psr_mle_toy/run_multistage_call_scaling.py \
+  --output experiments/psr_mle_toy/results/multistage_pomdp \
+  --seeds 2 --base-batch 10000000 --rounds 16
+MPLCONFIGDIR=/tmp/psr-mpl-cache .venv/bin/python -B \
+  experiments/psr_mle_toy/plot_multistage.py \
+  --input experiments/psr_mle_toy/results/multistage_pomdp \
+  --output experiments/psr_mle_toy/results/multistage_pomdp
 ```
 
 The output contains `multistage_runs.csv` with every checkpoint,
@@ -100,3 +107,29 @@ solves have different per-call costs; the table counts interfaces and does
 not equate their wall-clock time. These call totals cover reward-free
 exploration; requesting a downstream task policy would add one final
 single-model reward-planning call.
+
+## Multi-round call scaling check
+
+To expose update behavior hidden by the conservative appendix constants,
+a separate check fixes each round's training and nested batch sizes at
+10 million for ε=.1 and 40 million for ε=.05. This is a deliberately
+specified `1/ε²` batch rule, **not** the theorem's batch formula. There
+are two seeds for each H/r/ε cell. Every run stops by round 16 and passes
+the ex-post `TV <= bonus` audit. MLE and single-model planning each have
+the same number of calls:
+
+| H | r=1 | r=2 | r=4 |
+| ---: | ---: | ---: | ---: |
+| 3 | 3 | 3 | 4 |
+| 4 | 4 | 5 | 8 |
+| 5 | 5 | 7 | 10 |
+
+The counts are identical at both ε values; the lower ε uses exactly four
+times as many episodes in each H/r cell. In all these tested cells the
+number of calls is at most `rH`. This is empirical support for the
+rank/horizon and precision behavior, not a proof of the Õ(rH) asymptotic
+bound. The final TV is again zero because the finite candidate class is
+exactly realizable and the first batch already identifies the truth;
+later rounds shrink the data-dependent bonus until it permits stopping.
+Detailed refit paths and summaries are in `call_scaling_runs.csv`,
+`call_scaling_final.csv`, and `call_scaling_summary.csv`.
