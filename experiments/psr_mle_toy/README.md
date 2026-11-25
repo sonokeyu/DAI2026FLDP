@@ -1,5 +1,9 @@
 # Three-stage PSR MLE toy experiment
 
+[Multi-stage PSR experiment](MULTISTAGE_POMDP.md) runs the finite-class
+ordinary-MLE exploration loop on rank-controlled noisy POMDPs at horizons 3–5, with exact
+all-policy TV audits and four-method results.
+
 [Partially observed combination-lock experiment](COMBINATION_LOCK.md) gives
 the newer four-method comparison on a deeper POMDP, with exact all-policy TV,
 episode costs, oracle calls, and a specialized bonus stopping certificate.
