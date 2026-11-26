@@ -171,3 +171,59 @@ The run files are `epsilon/epsilon_runs.csv`,
 `epsilon/epsilon_certificate.pdf` and `epsilon/omle_epsilon_calls.pdf`.
 The initial tie convention selects a fixed nontrue candidate, so the
 learner does not start with the hidden true model.
+
+## Equal-episode accuracy sweep
+
+This experiment compares ours and finite-class OMLE at identical episode
+budgets as the requested accuracy tightens. Both algorithms use the same
+realizable **49-model** class: 24 one-coordinate alternatives shifted by
+0.6, 24 shifted by 0.15, and the true model. The common initial
+likelihood tie selects the alternative with the largest exact all-policy
+TV from truth, **0.1241**. The eight seeds are paired by index.
+
+For ε = 0.4, 0.2, 0.1, ours uses a batch size
+`B = 32 × (0.4/ε)^2`. Two exploration batches use `N = 12B` physical
+episodes, followed by the third MLE and single-model planning call.
+OMLE receives the same `N`, updates its likelihood scores after each
+two-episode round, and recomputes the maximum-TV model pair and policy
+in its confidence set each round. Its confidence radius uses that
+setting's own `N`. All reported OMLE joint searches had at least two
+active candidates; none were singleton no-ops.
+
+| ε | Episodes each | Ours MLE / planning calls | OMLE joint searches | Median final sup TV: ours / OMLE | `TV ≤ ε/4`: ours / OMLE |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.4 | 384 | 3 / 3 | 192 | 0.0983 / 0.0314 | 5/8 / 8/8 |
+| 0.2 | 1,536 | 3 / 3 | 768 | 0.0200 / 0.0242 | 8/8 / 8/8 |
+| 0.1 | 6,144 | 3 / 3 | 3,072 | 0.0238 / 0.0172 | 6/8 / 7/8 |
+
+The sample budgets are exactly matched. The target is not met in all
+seeds at ε = 0.4 or 0.1, and OMLE has better median TV at those two
+budgets. At ε = 0.2, ours has a slightly smaller median TV. The final
+errors remain nonzero at the tightest setting. These measurements support
+the call-count tradeoff **at the prescribed budget**. The number of ours
+calls is fixed here by the chosen two-batch schedule, while OMLE's number
+is fixed by its two-episode update schedule. Thus this sweep does not
+independently establish the theorem's stopping-call bound.
+
+The ours bonus did not trigger stopping in any of these 24 runs. The
+larger-batch certificate sweep above separately checks that the bonus
+eventually stops and upper-bounds exact sup TV, at much higher sample
+cost. Neither sweep establishes an asymptotic exponent from three or
+four accuracy settings. Oracle calls here also do not measure wall-clock
+cost per call; a joint search, MLE fit, and single-model plan are
+different computations.
+
+Reproduce this experiment with:
+
+```sh
+.venv/bin/python -B experiments/psr_mle_toy/run_queue_equal_budget.py \
+  --output experiments/psr_mle_toy/results/queue_pomdp/equal_budget --seeds 8
+MPLCONFIGDIR=/tmp/psr-mpl-cache .venv/bin/python -B \
+  experiments/psr_mle_toy/plot_queue_equal_budget.py \
+  --input experiments/psr_mle_toy/results/queue_pomdp/equal_budget \
+  --output experiments/psr_mle_toy/results/queue_pomdp/equal_budget
+```
+
+The full per-seed measurements are in `equal_budget/equal_budget_runs.csv`,
+the aggregates in `equal_budget/equal_budget_summary.csv`, and the figure
+in `equal_budget/equal_budget.pdf`.
