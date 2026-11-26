@@ -17,6 +17,8 @@ def main():
         ours = list(csv.DictReader(stream))
     with (args.input / "omle_epsilon_final.csv").open(newline="") as stream:
         omle = list(csv.DictReader(stream))
+    with (args.input / "epsilon_final.csv").open(newline="") as stream:
+        ours_final = list(csv.DictReader(stream))
     epsilons = sorted({float(row["epsilon"]) for row in ours}, reverse=True)
     fig, axes = plt.subplots(1, len(epsilons), figsize=(13, 3.8), sharey=True)
     for axis, epsilon in zip(axes, epsilons):
@@ -47,16 +49,25 @@ def main():
     plt.close(fig)
 
     eps = [float(row["epsilon"]) for row in omle]
-    calls = [int(row["calls"]) for row in omle]
+    omle_calls = [int(row["calls"]) for row in omle]
+    ours_calls = []
+    for epsilon in eps:
+        group = [row for row in ours_final if float(row["epsilon"]) == epsilon]
+        ours_calls.append(sum(int(row["mle_calls"]) for row in group) / len(group))
     stopped = [row["stopped"] == "True" for row in omle]
     fig, axis = plt.subplots(figsize=(5.5, 4))
-    axis.plot([1/value for value in eps], calls, marker="o", color="#438e5a")
-    for x, y, done in zip([1/value for value in eps], calls, stopped):
+    x_values = [1/value for value in eps]
+    axis.plot(x_values, ours_calls, marker="o", color="#246a9b",
+              label="ours, MLE calls (= planning calls)")
+    axis.plot(x_values, omle_calls, marker="s", color="#438e5a",
+              label="OMLE, joint searches")
+    for x, y, done in zip(x_values, omle_calls, stopped):
         if not done:
             axis.scatter([x], [y], marker="x", s=70, color="#d62728", zorder=3)
-    axis.set(xlabel="1/ε", ylabel="OMLE joint searches",
-             title="OMLE calls versus target accuracy")
+    axis.set(xlabel="1/ε", ylabel="Oracle calls",
+             title="Oracle calls versus target accuracy", yscale="log")
     axis.grid(alpha=.2)
+    axis.legend(frameon=False)
     fig.tight_layout()
     fig.savefig(args.output / "omle_epsilon_calls.pdf")
     plt.close(fig)
