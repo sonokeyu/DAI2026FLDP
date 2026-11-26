@@ -106,7 +106,7 @@ def run_omle(models, truth_index, epsilon, seed, max_calls):
         fit_index = int(scores.argmax())
         tv = worst_policy_tv(truth, models[fit_index])[0]
         rows.append(dict(method="omle", seed=seed, epsilon=epsilon,
-                         episodes=2 * (call - 1), calls=call - 1,
+                         episodes=2 * (call - 1), calls=call,
                          fitted_tv=tv, diameter=disagreement,
                          stopped=disagreement <= epsilon / 4))
         if disagreement <= epsilon / 4:
@@ -142,12 +142,13 @@ def main():
             print(f"epsilon={epsilon}, seed={seed}, calls={len(path)}, "
                   f"TV={path[-1]['sup_tv']:.6g}, bonus={path[-1]['bonus']:.6g}, "
                   f"delay={path[-1]['delay_to_stop']}", flush=True)
-        omle_path = run_omle(models, truth_index, epsilon, 20_000,
-                             args.omle_max_calls)
-        omle_runs.extend(omle_path)
-        omle_finals.append(omle_path[-1])
-        print(f"OMLE epsilon={epsilon}, calls={omle_path[-1]['calls']}, "
-              f"stopped={omle_path[-1]['stopped']}", flush=True)
+        for seed in range(args.seeds):
+            omle_path = run_omle(models, truth_index, epsilon, 20_000 + seed,
+                                 args.omle_max_calls)
+            omle_runs.extend(omle_path)
+            omle_finals.append(omle_path[-1])
+            print(f"OMLE epsilon={epsilon}, seed={seed}, calls={omle_path[-1]['calls']}, "
+                  f"stopped={omle_path[-1]['stopped']}", flush=True)
     write_csv(args.output / "epsilon_runs.csv", runs)
     write_csv(args.output / "epsilon_final.csv", finals)
     write_csv(args.output / "omle_epsilon_runs.csv", omle_runs)
@@ -167,6 +168,16 @@ def main():
                                 row["first_accurate_round"] for row in group])),
                             median_delay=float(np.median([row["delay_to_stop"] for row in group]))))
     write_csv(args.output / "epsilon_summary.csv", summary)
+    omle_summary = []
+    for epsilon in args.epsilons:
+        group = [row for row in omle_finals if row["epsilon"] == epsilon]
+        omle_summary.append(dict(epsilon=epsilon, seeds=len(group),
+                                 stopped=sum(row["stopped"] for row in group),
+                                 median_joint_searches=float(np.median([row["calls"] for row in group])),
+                                 median_episodes=float(np.median([row["episodes"] for row in group])),
+                                 median_fitted_tv=float(np.median([row["fitted_tv"] for row in group])),
+                                 median_final_diameter=float(np.median([row["diameter"] for row in group]))))
+    write_csv(args.output / "omle_epsilon_summary.csv", omle_summary)
 
 
 if __name__ == "__main__":

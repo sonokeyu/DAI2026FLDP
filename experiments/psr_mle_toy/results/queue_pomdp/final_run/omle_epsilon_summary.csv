@@ -1,0 +1,5 @@
+epsilon,seeds,stopped,median_joint_searches,median_episodes,median_fitted_tv,median_final_diameter
+0.2,8,8,1464.5,2927.0,0.0,0.04896637831314326
+0.1,8,8,3633.5,7265.0,0.0,0.02067864902836973
+0.05,8,7,6648.0,13294.0,0.0,0.0
+0.025,8,7,6648.0,13294.0,0.0,0.0

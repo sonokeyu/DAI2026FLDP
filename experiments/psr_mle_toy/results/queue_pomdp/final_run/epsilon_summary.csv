@@ -1,0 +1,5 @@
+epsilon,seeds,stopped,certificate_passed,stop_accuracy,median_calls,median_episodes,median_stop_tv,median_stop_bonus,median_first_accurate_round,median_delay
+0.2,8,8,8,8,8.0,1680000000.0,0.0,0.03614437790872823,1.0,7.0
+0.1,8,8,8,8,8.0,6720000000.0,0.0,0.018072241732518514,2.0,6.0
+0.05,8,8,8,8,8.0,26880000000.0,0.0,0.009033230300203685,2.0,6.0
+0.025,8,8,8,8,8.0,107520000000.0,0.0,0.004516616971735709,2.0,6.0
