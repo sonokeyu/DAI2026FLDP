@@ -34,6 +34,21 @@ def dense_candidate_class():
     return tuple(models)
 
 
+def fine_candidate_class():
+    """Realizable 73-model class with a third, closer parameter scale."""
+    truth = np.asarray(TRUE_WEIGHTS)
+    models = list(dense_candidate_class()[:-1])
+    for coordinate in range(len(truth)):
+        for shift in (-.05, .05):
+            weights = truth.copy()
+            weights[coordinate] = np.clip(weights[coordinate] + shift, .05, .95)
+            models.append(QueueModel(tuple(weights)))
+    models.append(QueueModel(tuple(truth)))
+    if len({model.weights for model in models}) != len(models):
+        raise RuntimeError("fine candidate class contains duplicate models")
+    return tuple(models)
+
+
 def finite_mle(models, counts):
     if not counts:
         return 0

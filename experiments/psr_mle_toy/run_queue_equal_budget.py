@@ -13,7 +13,7 @@ import random
 
 import numpy as np
 
-from queue_mle_class import dense_candidate_class
+from queue_mle_class import fine_candidate_class
 from queue_omle import core_interventions
 from queue_pomdp import TRUE_WEIGHTS
 from run_multistage_experiment import write_csv
@@ -24,6 +24,7 @@ from run_queue_ours import worst_policy_tv
 def omle_path(models, truth_index, seed, budget, epsilon, pairs):
     """Run one joint search per core-intervention round."""
     rng = random.Random(seed + 307)
+    pair_i, pair_j, pair_tv, pair_policies = pairs
     scores = np.zeros(len(models))
     active = np.ones(len(models), dtype=bool)
     log_likelihoods = {}
@@ -32,13 +33,16 @@ def omle_path(models, truth_index, seed, budget, epsilon, pairs):
     nontrivial_calls = 0
     interventions_per_round = truth.horizon - 1
     for call in range(1, budget // interventions_per_round + 1):
-        disagreement, left, right = max(
-            ((pairs[i, j][0], i, j) for i, j in combinations(range(len(models)), 2)
-             if active[i] and active[j]),
-            default=(0., -1, -1))
-        nontrivial_calls += int(left >= 0)
-        diagnostic = pairs[left, right][1] if left >= 0 else type(
-            "Zero", (), {"__getitem__": lambda self, history: 0})()
+        eligible = active[pair_i] & active[pair_j]
+        if eligible.any():
+            values = np.where(eligible, pair_tv, -1.)
+            pair_index = len(values) - 1 - int(np.argmax(values[::-1]))
+            disagreement = float(values[pair_index])
+            diagnostic = pair_policies[pair_index]
+            nontrivial_calls += 1
+        else:
+            disagreement = 0.
+            diagnostic = type("Zero", (), {"__getitem__": lambda self, history: 0})()
         for policy in core_interventions(diagnostic, truth, rng):
             trace = truth.sample(policy, rng)
             if trace not in log_likelihoods:
@@ -63,11 +67,13 @@ def main():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--seeds", type=int, default=4)
-    parser.add_argument("--epsilons", type=float, nargs="+", default=(.4, .2, .1))
-    parser.add_argument("--base-batch", type=int, default=32)
+    parser.add_argument("--epsilons", type=float, nargs="+",
+                        default=(.4, .282842712474619, .2,
+                                 .1414213562373095))
+    parser.add_argument("--base-batch", type=int, default=2000)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    raw_models = dense_candidate_class()
+    raw_models = fine_candidate_class()
     raw_truth_index = next(i for i, model in enumerate(raw_models)
                        if model.weights == tuple(TRUE_WEIGHTS))
     # Likelihood ties at zero samples select index zero.  Put the most
@@ -81,8 +87,12 @@ def main():
                for epsilon in args.epsilons}
     if len(budgets) != len(args.epsilons):
         raise ValueError("epsilon values must map to distinct episode budgets")
-    pairs = {(i, j): worst_policy_tv(models[i], models[j])
-             for i, j in combinations(range(len(models)), 2)}
+    pair_keys = list(combinations(range(len(models)), 2))
+    pair_data = [worst_policy_tv(models[i], models[j]) for i, j in pair_keys]
+    pairs = (np.asarray([i for i, j in pair_keys]),
+             np.asarray([j for i, j in pair_keys]),
+             np.asarray([value for value, policy in pair_data]),
+             [policy for value, policy in pair_data])
     all_rows = []
     for seed in range(args.seeds):
         for budget, epsilon in sorted(budgets.items()):
@@ -104,7 +114,8 @@ def main():
                                  initial_tv=ours_rows[0]["tv"]))
             print(f"seed={seed}, epsilon={epsilon:g}, N={budget}, "
                   f"ours={final['mle_calls']} MLE+planning, "
-                  f"OMLE={omle_row['joint_calls']} joint", flush=True)
+                  f"OMLE={omle_row['joint_calls']} joint, "
+                  f"TV={final['tv']:.5g}/{omle_row['tv']:.5g}", flush=True)
     write_csv(args.output / "equal_budget_runs.csv", all_rows)
     summary = []
     for budget, epsilon in sorted(budgets.items()):
@@ -120,6 +131,10 @@ def main():
                             omle_nontrivial_calls=int(np.median([row["nontrivial_joint_calls"] for row in omle_group])),
                             ours_median_tv=float(np.median([row["tv"] for row in ours_group])),
                             omle_median_tv=float(np.median([row["tv"] for row in omle_group])),
+                            ours_max_tv=max(row["tv"] for row in ours_group),
+                            omle_max_tv=max(row["tv"] for row in omle_group),
+                            ours_below_001=sum(row["tv"] < .01 for row in ours_group),
+                            omle_below_001=sum(row["tv"] < .01 for row in omle_group),
                             ours_accuracy=sum(row["tv"] <= epsilon/4 for row in ours_group),
                             omle_accuracy=sum(row["tv"] <= epsilon/4 for row in omle_group),
                             ours_certificate_stops=sum(row["stopped"] for row in ours_group)))

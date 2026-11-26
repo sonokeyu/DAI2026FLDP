@@ -174,45 +174,46 @@ learner does not start with the hidden true model.
 
 ## Equal-episode accuracy sweep
 
-This experiment compares ours and finite-class OMLE at identical episode
-budgets as the requested accuracy tightens. Both algorithms use the same
-realizable **49-model** class: 24 one-coordinate alternatives shifted by
-0.6, 24 shifted by 0.15, and the true model. Ours' initial MLE tie
-selects the alternative with the largest exact all-policy TV from truth,
-**0.1241**. OMLE initially holds the entire class in its confidence set.
-The eight seeds are paired by index.
+This experiment compares ours and finite-class OMLE at identical total
+episode budgets. To keep final errors measurable at larger budgets,
+both use the same realizable **73-model** class: 24 one-coordinate
+alternatives shifted by 0.6, 24 shifted by about 0.15, 24 shifted by
+0.05, and the truth. All 73 models are distinct. Ours' initial MLE tie
+selects an alternative with exact all-policy TV **0.1241** from truth;
+OMLE initially holds the whole class in its confidence set. There are
+eight seeds per setting.
 
-For ε = 0.4, 0.2, 0.1, ours uses a batch size
-`B = 32 × (0.4/ε)^2`. Two exploration batches use `N = 12B` physical
-episodes, followed by the third MLE and single-model planning call.
-OMLE receives the same `N`, executes the three PSR core-intervention
-policies specified by the original exploration rule per round, and
-recomputes the maximum-TV model pair and policy in its confidence set.
-Its confidence set is intersected with the previous one; its likelihood
-slack uses that setting's own `N`. All reported OMLE joint searches had
-at least two active candidates; none were singleton no-ops.
+Ours uses `B = 2,000 × (0.4/ε)^2` episodes in each of six experiments
+per frozen round. Two such rounds give `N = 12B` physical episodes,
+followed by its third MLE and single-model planning call. OMLE gets
+the same `N`, executing the three PSR core-intervention policies and
+then updating its likelihood confidence set after every joint search.
+The confidence set is intersected with the previous one. All reported
+OMLE searches involved at least two active candidates.
 
-| ε | Episodes each | Ours MLE / planning calls | OMLE joint searches | Median final sup TV: ours / OMLE | `TV ≤ ε/4`: ours / OMLE |
+| ε | Episodes each | Ours MLE / planning calls | OMLE joint searches | Median sup TV: ours / OMLE | `TV < 0.01`: ours / OMLE |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0.4 | 384 | 3 / 3 | 128 | 0.0983 / 0.0896 | 5/8 / 5/8 |
-| 0.2 | 1,536 | 3 / 3 | 512 | 0.0200 / 0.0239 | 8/8 / 8/8 |
-| 0.1 | 6,144 | 3 / 3 | 2,048 | 0.0238 / 0.0238 | 6/8 / 6/8 |
+| 0.4 | 24,000 | 3 / 3 | 8,000 | 0.00808 / 0.00715 | 6/8 / 8/8 |
+| 0.283 | 48,000 | 3 / 3 | 16,000 | 0.00792 / 0.00771 | 7/8 / 7/8 |
+| 0.2 | 96,000 | 3 / 3 | 32,000 | 0.00796 / 0.00662 | 5/8 / 7/8 |
+| 0.141 | 192,000 | 3 / 3 | 64,000 | 0 / 0 | 8/8 / 8/8 |
 
-The sample budgets are exactly matched. The target is not met in all
-seeds at ε = 0.4 or 0.1. At ε = 0.2, ours has a slightly smaller median
-TV. The final errors remain nonzero at the tightest setting. These measurements support
-the call-count tradeoff **at the prescribed budget**. The number of ours
-calls is fixed here by the chosen two-batch schedule, while OMLE's number
-is fixed by its three-episode core-intervention schedule. Thus this sweep does not
-independently establish the theorem's stopping-call bound.
+Both methods have median TV below 0.01 at the first three budgets,
+with a few individual runs as high as 0.01105. At 192,000 episodes all
+eight seeds of both methods recover the truth exactly, a finite-class
+effect. Every run meets the paper's looser `TV ≤ ε/4` target. The
+episode totals are exactly matched, but the first update is not: ours
+collects `N/2` episodes before its first refit, and OMLE collects three
+before its next joint search.
 
-The ours bonus did not trigger stopping in any of these 24 runs. The
-larger-batch certificate sweep above separately checks that the bonus
-eventually stops and upper-bounds exact sup TV, at much higher sample
-cost. Neither sweep establishes an asymptotic exponent from three or
-four accuracy settings. Oracle calls here also do not measure wall-clock
-cost per call; a joint search, MLE fit, and single-model plan are
-different computations.
+The three ours calls are fixed by this two-batch schedule. Its bonus
+did not trigger stopping in any of these 32 runs, so this sweep tests
+accuracy and interface calls **at an allocated sample budget**, not
+the theorem's data-dependent stopping bound. The stopping sweep below
+uses a separate 49-model class and much larger batches. The class,
+sample totals, and stopping rule must be kept distinct when discussing
+the two experiments. Oracle calls also do not measure wall-clock cost
+per call.
 
 Reproduce this experiment with:
 
