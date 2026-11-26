@@ -8,31 +8,14 @@ import random
 
 import numpy as np
 
-from queue_pomdp import QueueModel, TRUE_WEIGHTS, STABILITY
+from queue_pomdp import TRUE_WEIGHTS, STABILITY
+from queue_mle_class import candidate_class, finite_mle
 from queue_psr import StageSupport
 from run_multistage_experiment import write_csv
 from run_queue_ours import design_law, plan_bonus, worst_policy_tv
 
 
-def make_class():
-    truth = np.asarray(TRUE_WEIGHTS)
-    models = [QueueModel(tuple(truth))]
-    for index in range(12):
-        for shift in (-.6, .6):
-            candidate = truth.copy()
-            candidate[index] = np.clip(candidate[index] + shift, .05, .95)
-            models.append(QueueModel(tuple(candidate)))
-    return tuple(models)
-
-
-def exact_mle(models, counts):
-    if not counts:
-        return 0
-    scores = np.zeros(len(models))
-    for trace, count in counts.items():
-        scores += count * np.log([model.trajectory_probability(trace)
-                                  for model in models])
-    return int(scores.argmax())
+exact_mle = finite_mle
 
 
 def baseline(models, truth_index, seed, method, budget, checkpoint):
@@ -133,7 +116,9 @@ def main():
     parser.add_argument("--seeds",type=int,default=4); parser.add_argument("--budget",type=int,default=384)
     parser.add_argument("--checkpoint",type=int,default=64); parser.add_argument("--batch",type=int,default=32)
     parser.add_argument("--epsilon",type=float,default=.4); args=parser.parse_args()
-    args.output.mkdir(parents=True,exist_ok=True); models=make_class(); truth_index=0
+    args.output.mkdir(parents=True,exist_ok=True); models=candidate_class()
+    truth_index=next(i for i, model in enumerate(models)
+                     if model.weights == tuple(TRUE_WEIGHTS))
     all_rows=[]
     for seed in range(args.seeds):
         for method in ("uniform","count"):

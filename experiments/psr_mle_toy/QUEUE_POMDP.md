@@ -124,9 +124,9 @@ schedule and refits after each 192 collected episodes. The baselines
 retain their own updates. The TV curve carries each method's latest fit
 forward to each shared episode checkpoint.
 
-At 384 episodes, the median worst-policy TV was 0.0476 for ours, 0.0344
+At 384 episodes, the median worst-policy TV was 0.0710 for ours, 0.0344
 for OMLE, 0.0322 for uniform+MLE, and 0.0303 for count+MLE. The methods
-met `TV <= ε/4 = 0.1` in 7/8, 8/8, 8/8, and 8/8 seeds respectively.
+met `TV <= ε/4 = 0.1` in 6/8, 8/8, 8/8, and 8/8 seeds respectively.
 Ours made 3 MLE and 3 single-model planning calls. The controls made 6
 MLE calls. OMLE made 192 joint model-pair/policy searches. Every method
 used the same episode budget, and all TV evaluations were exact over the
@@ -139,3 +139,35 @@ therefore establish a matched comparison on this finite 64-state task,
 while the continuous batch sweep above remains the larger-class stress
 test. Raw paths and aggregates are in `matched/matched_runs.csv` and
 `matched/matched_summary.csv`. The plot is `matched/matched_tv.pdf`.
+
+## Accuracy sweep and stopping certificate
+
+The final run varies ε over 0.4, 0.2, 0.1, and 0.05 on the same finite
+class. The ours batch is set to `10,000,000 × (0.4/ε)^2`. Across two
+seeds, ours stops after **8 MLE calls and 8 single-model planning calls
+at every ε**. Total episodes scale with the batch, while the number of
+updates stays fixed in this sweep. The exact sup TV is zero at stopping
+for these finite-class runs. Every recorded round satisfies
+`sup TV <= fitted bonus`, and both seeds stop only when the true TV is
+below ε/4. At ε=.4 the initial selected model already meets ε/4, but the
+bonus takes seven more rounds to cross the stopping threshold. At ε=.2
+the delay is also seven rounds. At ε=.1 and .05 the first accurate fit
+appears at round two and stopping occurs six rounds later. This directly
+shows that the certificate is sufficient for stopping, while its upper
+bound can remain loose for several rounds after the model is accurate.
+
+OMLE was run on the same 25 models with a diameter stopping rule and a
+3,000 joint-search cap. It stopped after 692 calls for ε=.4 and 1,304
+calls for ε=.2. It had not stopped at the cap for ε=.1 or .05. This
+supports increasing OMLE effort as the target tightens and shows constant
+ours update counts over the tested range. The OMLE points at smaller ε
+are censored at 3,000 calls, so this experiment does not estimate a
+precise growth exponent. Two seeds and four ε values are a proof-of-
+mechanism check rather than a scaling study.
+
+The run files are `epsilon/epsilon_runs.csv`,
+`epsilon/epsilon_summary.csv`, `epsilon/omle_epsilon_runs.csv`, and
+`epsilon/omle_epsilon_final.csv`. The figures are
+`epsilon/epsilon_certificate.pdf` and `epsilon/omle_epsilon_calls.pdf`.
+The initial tie convention selects a fixed nontrue candidate, so the
+learner does not start with the hidden true model.
