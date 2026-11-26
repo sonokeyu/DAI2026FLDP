@@ -16,6 +16,24 @@ def candidate_class():
     return tuple(models)
 
 
+def dense_candidate_class():
+    """Realizable 49-model class with coarse and nearby alternatives."""
+    truth = np.asarray(TRUE_WEIGHTS)
+    models = list(candidate_class()[:-1])
+    for coordinate in range(len(truth)):
+        for shift in (-.15, .15):
+            weights = truth.copy()
+            weights[coordinate] = np.clip(weights[coordinate] + shift, .05, .95)
+            coarse = models[2*coordinate + int(shift > 0)]
+            if tuple(weights) == coarse.weights:
+                weights[coordinate] = (truth[coordinate] + coarse.weights[coordinate]) / 2
+            models.append(QueueModel(tuple(weights)))
+    models.append(QueueModel(tuple(truth)))
+    if len({model.weights for model in models}) != len(models):
+        raise RuntimeError("dense candidate class contains duplicate models")
+    return tuple(models)
+
+
 def finite_mle(models, counts):
     if not counts:
         return 0

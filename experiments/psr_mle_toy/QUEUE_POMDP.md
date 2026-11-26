@@ -177,32 +177,33 @@ learner does not start with the hidden true model.
 This experiment compares ours and finite-class OMLE at identical episode
 budgets as the requested accuracy tightens. Both algorithms use the same
 realizable **49-model** class: 24 one-coordinate alternatives shifted by
-0.6, 24 shifted by 0.15, and the true model. The common initial
-likelihood tie selects the alternative with the largest exact all-policy
-TV from truth, **0.1241**. The eight seeds are paired by index.
+0.6, 24 shifted by 0.15, and the true model. Ours' initial MLE tie
+selects the alternative with the largest exact all-policy TV from truth,
+**0.1241**. OMLE initially holds the entire class in its confidence set.
+The eight seeds are paired by index.
 
 For ε = 0.4, 0.2, 0.1, ours uses a batch size
 `B = 32 × (0.4/ε)^2`. Two exploration batches use `N = 12B` physical
 episodes, followed by the third MLE and single-model planning call.
-OMLE receives the same `N`, updates its likelihood scores after each
-two-episode round, and recomputes the maximum-TV model pair and policy
-in its confidence set each round. Its confidence radius uses that
-setting's own `N`. All reported OMLE joint searches had at least two
-active candidates; none were singleton no-ops.
+OMLE receives the same `N`, executes the three PSR core-intervention
+policies specified by the original exploration rule per round, and
+recomputes the maximum-TV model pair and policy in its confidence set.
+Its confidence set is intersected with the previous one; its likelihood
+slack uses that setting's own `N`. All reported OMLE joint searches had
+at least two active candidates; none were singleton no-ops.
 
 | ε | Episodes each | Ours MLE / planning calls | OMLE joint searches | Median final sup TV: ours / OMLE | `TV ≤ ε/4`: ours / OMLE |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0.4 | 384 | 3 / 3 | 192 | 0.0983 / 0.0314 | 5/8 / 8/8 |
-| 0.2 | 1,536 | 3 / 3 | 768 | 0.0200 / 0.0242 | 8/8 / 8/8 |
-| 0.1 | 6,144 | 3 / 3 | 3,072 | 0.0238 / 0.0172 | 6/8 / 7/8 |
+| 0.4 | 384 | 3 / 3 | 128 | 0.0983 / 0.0896 | 5/8 / 5/8 |
+| 0.2 | 1,536 | 3 / 3 | 512 | 0.0200 / 0.0239 | 8/8 / 8/8 |
+| 0.1 | 6,144 | 3 / 3 | 2,048 | 0.0238 / 0.0238 | 6/8 / 6/8 |
 
 The sample budgets are exactly matched. The target is not met in all
-seeds at ε = 0.4 or 0.1, and OMLE has better median TV at those two
-budgets. At ε = 0.2, ours has a slightly smaller median TV. The final
-errors remain nonzero at the tightest setting. These measurements support
+seeds at ε = 0.4 or 0.1. At ε = 0.2, ours has a slightly smaller median
+TV. The final errors remain nonzero at the tightest setting. These measurements support
 the call-count tradeoff **at the prescribed budget**. The number of ours
 calls is fixed here by the chosen two-batch schedule, while OMLE's number
-is fixed by its two-episode update schedule. Thus this sweep does not
+is fixed by its three-episode core-intervention schedule. Thus this sweep does not
 independently establish the theorem's stopping-call bound.
 
 The ours bonus did not trigger stopping in any of these 24 runs. The
@@ -227,3 +228,143 @@ MPLCONFIGDIR=/tmp/psr-mpl-cache .venv/bin/python -B \
 The full per-seed measurements are in `equal_budget/equal_budget_runs.csv`,
 the aggregates in `equal_budget/equal_budget_summary.csv`, and the figure
 in `equal_budget/equal_budget.pdf`.
+
+## Actual bonus stopping across accuracy targets
+
+The equal-episode sweep above stops after a fixed number of allocated
+batches, so its three calls do not measure the paper's data-dependent
+stopping rule. This follow-up runs that rule until its fitted bonus first
+falls below `3ε/16`. It retains the same realizable 49-model class and
+common initial candidate (initial exact sup TV 0.1241). Each setting
+uses four seeds and the same 64-state POMDP.
+
+For this empirical scaling study, the frozen batch size is
+`B = 10,000,000 × (0.4/ε)^2 / sqrt(1 + log2(0.4/ε))`, rounded to an
+integer. The mild logarithmic divisor makes changes in the number of
+stopping rounds visible over four accuracy settings while retaining
+inverse-square sample scaling up to logarithms. It is a declared
+experimental schedule, not a numerical instantiation of the manuscript's
+appendix batch formula.
+
+| ε | Episodes per batch | MLE and planning calls, each | Median episodes to stop | First `TV ≤ ε/4` round | Median stop bonus | Median stop TV |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.4 | 10,000,000 | 9 | 480,000,000 | 2 | 0.07040 | 0 |
+| 0.2 | 28,284,272 | 11 | 1,697,056,320 | 2 | 0.03731 | 0 |
+| 0.1 | 92,376,048 | 14 | 7,205,331,744 | 2 | 0.01804 | 0 |
+| 0.05 | 320,000,000 | 15 | 26,880,000,000 | 2 | 0.00934 | 0 |
+
+All four seeds stopped at every ε. Every recorded round passed the
+**ex-post** exact `sup TV ≤ bonus` check, and all stopping fits passed
+`sup TV ≤ ε/4`. The number of MLE and planning calls rose from 9 to 15
+while `1/ε` rose eightfold and episodes rose 56-fold. The fit first met
+the target at round two in every setting, so the bonus delayed stopping
+by 7, 9, 12, and 13 further calls. This measures how loose the
+certificate is on this task. The final TV is zero because large batches
+identify the truth in this finite realizable class; the continuous
+stress check below addresses nonzero fitted error.
+
+The call trend depends on the stated batch schedule. A batch exactly
+proportional to `1/ε²` can produce a flat call curve over this range,
+which is consistent with the paper's near-independent oracle bound.
+Neither curve by itself proves an asymptotic rate. The numerical bonus
+uses the finite class size in its calibration and exact model planning;
+the TV audit checks its behavior on the sampled runs, not the full
+high-probability theorem.
+
+Reproduce the finite stopping sweep with:
+
+```sh
+.venv/bin/python -B experiments/psr_mle_toy/run_queue_stopping_scaling.py \
+  --output experiments/psr_mle_toy/results/queue_pomdp/stopping_scaling \
+  --seeds 4 --rounds 32
+```
+
+### Continuous-model stress check
+
+The same near-inverse-square batch schedule was also run with numerical
+MLE over the 12-parameter continuous POMDP class, for two seeds. This
+removes exact finite-class model recovery: every final worst-policy TV is
+strictly positive. All eight runs stopped by the bonus, passed the exact
+TV target, and passed the ex-post `TV ≤ bonus` audit on every recorded
+round.
+
+| ε | MLE and planning calls, each | Median episodes | Median final TV |
+| ---: | ---: | ---: | ---: |
+| 0.4 | 9 | 480,000,000 | 0.0001739 |
+| 0.2 | 12 | 1,866,761,886 | 0.0000784 |
+| 0.1 | 15 | 7,759,587,612 | 0.0000549 |
+| 0.05 | 17 | 30,720,000,000 | 0.0000200 |
+
+This continuous result is an empirical stress check. The multistart
+numerical MLE may be a local optimum, and the effective class-size
+parameter in its bonus is not a proved covering number. Therefore its
+observed `TV ≤ bonus` inequality is not a theorem-level certificate.
+
+```sh
+.venv/bin/python -B experiments/psr_mle_toy/run_queue_continuous_stopping.py \
+  --output experiments/psr_mle_toy/results/queue_pomdp/continuous_stopping \
+  --seeds 2 --rounds 32
+MPLCONFIGDIR=/tmp/psr-mpl-cache .venv/bin/python -B \
+  experiments/psr_mle_toy/plot_queue_stopping_scaling.py \
+  --input experiments/psr_mle_toy/results/queue_pomdp/stopping_scaling \
+  --continuous-input experiments/psr_mle_toy/results/queue_pomdp/continuous_stopping \
+  --output experiments/psr_mle_toy/results/queue_pomdp/stopping_scaling
+```
+
+The per-round paths, summaries, and figure are under
+`stopping_scaling/` and `continuous_stopping/`.
+
+### OMLE joint-search stopping on the same class
+
+OMLE was also rerun on the same fixed 49-model class and truth, with
+four seeds per ε. Each round selects the maximum-TV
+pair in the current likelihood confidence set, intersects the updated
+confidence set with the previous one, and collects three core-action
+intervention episodes (the specialization of [Eq. 10 in the original
+paper](https://arxiv.org/html/2209.14997) to this core list). We add an
+**early-stop check** when that set's
+exact all-policy TV diameter is at most `ε/4`; reward-free OMLE in the
+paper instead prescribes a number of rounds in advance. Each setting
+uses its own confidence slack based on its call cap. None of these 16
+runs reached its cap; the truth remained in the confidence set and the
+fitted model met the target in every run.
+
+| ε | Ours: MLE / planning calls | OMLE: median joint searches | Ours: median episodes | OMLE: median episodes |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.4 | 9 / 9 | 1,267 | 480,000,000 | 3,801 |
+| 0.2 | 11 / 11 | 9,698 | 1,697,056,320 | 29,094 |
+| 0.1 | 14 / 14 | 21,302.5 | 7,205,331,744 | 63,907.5 |
+| 0.05 | 15 / 15 | 32,119.5 | 26,880,000,000 | 96,358.5 |
+
+The likelihood slack uses `β = log(K |Π_exp| |Θ| / 0.1)`, with the
+theorem's unspecified numerical constant set to one. This is an
+experimental calibration; the observed truth coverage is not a
+formal guarantee for this exact constant. OMLE's observed joint-search
+count increases as the target tightens,
+but the increment is smaller at the two hardest settings. The usual
+inverse-square accuracy dependence is an **upper-bound scale**, not a
+claim that every fixed finite instance follows an exact quadratic
+curve. Ours uses far fewer MLE and single-model planning calls here,
+while OMLE needs vastly fewer episodes to reach its stopping rule.
+These are stopping costs with different sample totals. The equal-episode
+sweep above is the matched-budget accuracy comparison; neither table
+equates one joint search with one MLE or one planning call in runtime.
+Both methods begin with zero collected episodes and the same model class,
+but their first updates do not use similar sample amounts:
+at ε=0.4 ours collects 60 million episodes before refitting, whereas
+OMLE collects three before its next joint search. Consequently the
+stopping plot cannot serve as a matched-sample comparison.
+
+```sh
+.venv/bin/python -B experiments/psr_mle_toy/run_queue_omle_stopping_scaling.py \
+  --output experiments/psr_mle_toy/results/queue_pomdp/omle_stopping \
+  --seeds 4 --base-cap 5000 --max-cap 50000
+MPLCONFIGDIR=/tmp/psr-mpl-cache .venv/bin/python -B \
+  experiments/psr_mle_toy/plot_queue_stopping_comparison.py \
+  --ours experiments/psr_mle_toy/results/queue_pomdp/stopping_scaling \
+  --omle experiments/psr_mle_toy/results/queue_pomdp/omle_stopping \
+  --output experiments/psr_mle_toy/results/queue_pomdp/stopping_scaling
+```
+
+The comparison plot is `stopping_scaling/stopping_comparison.pdf`.
+Per-seed OMLE paths and censoring status are in `omle_stopping/`.

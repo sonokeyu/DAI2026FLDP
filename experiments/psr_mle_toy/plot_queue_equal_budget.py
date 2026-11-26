@@ -33,7 +33,7 @@ def main():
     axes[2].plot(x, [float(row["omle_median_tv"]) for row in rows], "s-", color="#438e5a",
                  label="OMLE")
     axes[2].plot(x, [float(row["initial_tv"]) for row in rows], ":", color="#777777",
-                 label="shared initial TV")
+                 label="ours initial MLE TV")
     axes[2].plot(x, [float(row["epsilon"])/4 for row in rows], "k--", label="ε/4 target")
     axes[2].set(ylabel="Exact worst-policy TV", title="Accuracy at the same N", ylim=(-.01, .16))
     axes[2].legend(frameon=False, fontsize=8)

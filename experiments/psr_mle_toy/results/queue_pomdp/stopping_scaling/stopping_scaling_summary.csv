@@ -1,0 +1,5 @@
+epsilon,inverse_epsilon,candidates,seeds,batch,stopped,all_rounds_certified,stop_target_passes,median_calls,call_min,call_max,median_episodes,median_stop_tv,median_stop_bonus,median_first_accurate_round
+0.4,2.5,49,4,10000000,4,4,4,9.0,9,9,480000000.0,0.0,0.07039614690939491,2.0
+0.2,5.0,49,4,28284272,4,4,4,11.0,11,11,1697056320.0,0.0,0.03730555224573276,2.0
+0.1,10.0,49,4,92376048,4,4,4,14.0,14,14,7205331744.0,0.0,0.018043461716812863,2.0
+0.05,20.0,49,4,320000000,4,4,4,15.0,15,15,26880000000.0,0.0,0.009335366125147734,2.0

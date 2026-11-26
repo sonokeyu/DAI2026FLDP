@@ -1,6 +1,6 @@
 """Paired epsilon sweep with identical episode budgets and a fixed model class.
 
-OMLE follows its prescribed two-episode update schedule for the whole budget.
+OMLE follows its prescribed set of PSR core-intervention policies per round.
 Ours uses the theorem's batch scaling B proportional to epsilon**-2.  This
 experiment compares interface calls at equal *allocated* sample budgets;
 the separate certificate sweep checks stopping.
@@ -13,41 +13,47 @@ import random
 
 import numpy as np
 
-from queue_mle_class import candidate_class
-from queue_pomdp import QueueModel, TRUE_WEIGHTS
+from queue_mle_class import dense_candidate_class
+from queue_omle import core_interventions
+from queue_pomdp import TRUE_WEIGHTS
 from run_multistage_experiment import write_csv
 from run_queue_matched import ours
 from run_queue_ours import worst_policy_tv
 
 
 def omle_path(models, truth_index, seed, budget, epsilon, pairs):
-    """Run each joint search at its original two-episode frequency."""
+    """Run one joint search per core-intervention round."""
     rng = random.Random(seed + 307)
-    uniform = type("Uniform", (), {"__getitem__": lambda self, history: rng.randrange(2)})()
     scores = np.zeros(len(models))
+    active = np.ones(len(models), dtype=bool)
     log_likelihoods = {}
     truth = models[truth_index]
     slack = log(budget * len(models) / .1)
     nontrivial_calls = 0
-    for call in range(1, budget // 2 + 1):
-        best = float(scores.max())
-        active = [i for i, score in enumerate(scores) if score >= best - slack]
+    interventions_per_round = truth.horizon - 1
+    for call in range(1, budget // interventions_per_round + 1):
         disagreement, left, right = max(
-            ((pairs[i, j][0], i, j) for i, j in combinations(active, 2)),
+            ((pairs[i, j][0], i, j) for i, j in combinations(range(len(models)), 2)
+             if active[i] and active[j]),
             default=(0., -1, -1))
         nontrivial_calls += int(left >= 0)
-        diagnostic = pairs[left, right][1] if left >= 0 else uniform
-        for policy in (uniform, diagnostic):
+        diagnostic = pairs[left, right][1] if left >= 0 else type(
+            "Zero", (), {"__getitem__": lambda self, history: 0})()
+        for policy in core_interventions(diagnostic, truth, rng):
             trace = truth.sample(policy, rng)
             if trace not in log_likelihoods:
                 log_likelihoods[trace] = np.log(
                     [model.trajectory_probability(trace) for model in models])
             scores += log_likelihoods[trace]
-        episodes = 2 * call
-    fit_index = int(scores.argmax())
+        active &= scores >= float(scores.max()) - slack
+        if not active.any():
+            raise RuntimeError("OMLE confidence set became empty")
+    fit_index = max((i for i in range(len(models)) if active[i]),
+                    key=lambda i: scores[i])
     return dict(method="omle", seed=seed, epsilon=epsilon,
                 episodes=budget, mle_calls=0, planning_calls=0,
-                joint_calls=budget // 2, nontrivial_joint_calls=nontrivial_calls,
+                joint_calls=budget // interventions_per_round,
+                nontrivial_joint_calls=nontrivial_calls,
                 fit_index=fit_index,
                 tv=worst_policy_tv(truth, models[fit_index])[0],
                 diameter=disagreement)
@@ -61,16 +67,7 @@ def main():
     parser.add_argument("--base-batch", type=int, default=32)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    # Add nearby alternatives to avoid immediate exact recovery from the
-    # coarse 25-model class.  The truth remains in this realizable class.
-    truth_weights = np.asarray(TRUE_WEIGHTS)
-    raw_models = list(candidate_class()[:-1])
-    for coordinate in range(len(truth_weights)):
-        for shift in (-.15, .15):
-            weights = truth_weights.copy()
-            weights[coordinate] = np.clip(weights[coordinate] + shift, .05, .95)
-            raw_models.append(QueueModel(tuple(weights)))
-    raw_models.append(QueueModel(tuple(truth_weights)))
+    raw_models = dense_candidate_class()
     raw_truth_index = next(i for i, model in enumerate(raw_models)
                        if model.weights == tuple(TRUE_WEIGHTS))
     # Likelihood ties at zero samples select index zero.  Put the most
