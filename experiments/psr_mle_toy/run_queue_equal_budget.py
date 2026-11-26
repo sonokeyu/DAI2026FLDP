@@ -43,7 +43,8 @@ def omle_path(models, truth_index, seed, budget, epsilon, pairs):
         else:
             disagreement = 0.
             diagnostic = type("Zero", (), {"__getitem__": lambda self, history: 0})()
-        for policy in core_interventions(diagnostic, truth, rng):
+        round_policies = tuple(core_interventions(diagnostic, truth, rng))
+        for policy in round_policies:
             trace = truth.sample(policy, rng)
             if trace not in log_likelihoods:
                 log_likelihoods[trace] = np.log(
@@ -71,6 +72,8 @@ def main():
                         default=(.4, .282842712474619, .2,
                                  .1414213562373095))
     parser.add_argument("--base-batch", type=int, default=2000)
+    parser.add_argument("--budgets", type=int, nargs="+", default=None,
+                        help="explicit episode budgets (must be divisible by 12)")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     raw_models = fine_candidate_class()
@@ -83,9 +86,13 @@ def main():
     order = [first] + [i for i in range(len(raw_models)) if i != first]
     models = tuple(raw_models[i] for i in order)
     truth_index = order.index(raw_truth_index)
-    budgets = {12 * round(args.base_batch * (.4 / epsilon) ** 2): epsilon
-               for epsilon in args.epsilons}
-    if len(budgets) != len(args.epsilons):
+    budgets = ({budget: .4 * (6000 / budget) ** .5 for budget in args.budgets}
+               if args.budgets else
+               {12 * round(args.base_batch * (.4 / epsilon) ** 2): epsilon
+                for epsilon in args.epsilons})
+    if args.budgets and any(budget % 12 for budget in args.budgets):
+        raise ValueError("explicit budgets must be divisible by 12")
+    if not args.budgets and len(budgets) != len(args.epsilons):
         raise ValueError("epsilon values must map to distinct episode budgets")
     pair_keys = list(combinations(range(len(models)), 2))
     pair_data = [worst_policy_tv(models[i], models[j]) for i, j in pair_keys]
