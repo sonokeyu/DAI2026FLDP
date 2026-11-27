@@ -1,0 +1,4 @@
+seed,epsilon,joint_search_calls,confidence_updates,episodes,stopped,diameter,active_models,fitted_tv,truth_covered
+0,0.05,189264,189263,567789,True,0.01179189887413958,4,0.0,True
+1,0.05,177046,177045,531135,True,0.009944309313014543,3,0.0,True
+2,0.05,151117,151116,453348,True,0.011689256112989217,4,0.0,True
