@@ -15,7 +15,7 @@ from run_queue_epsilon_certificate import run_case as run_ours
 from run_queue_ours import worst_policy_tv
 
 
-def run_omle(models, truth_index, pairs, epsilon, seed, cap):
+def run_omle(models, truth_index, pairs, epsilon, seed, cap, max_rounds=None):
     rng = random.Random(seed + 307)
     truth = models[truth_index]
     pair_i, pair_j, pair_tv, pair_policies = pairs
@@ -23,7 +23,9 @@ def run_omle(models, truth_index, pairs, epsilon, seed, cap):
     active = np.ones(len(models), dtype=bool)
     log_cache = {}
     slack = log(cap * (truth.horizon - 1) * len(models) / .1)
-    for calls in range(cap + 1):
+    if max_rounds is None:
+        max_rounds = cap
+    for calls in range(min(max_rounds, cap) + 1):
         eligible = active[pair_i] & active[pair_j]
         if eligible.any():
             values = np.where(eligible, pair_tv, -1.)
@@ -32,7 +34,7 @@ def run_omle(models, truth_index, pairs, epsilon, seed, cap):
         else:
             pair_index, diameter = -1, 0.
         stopped = diameter <= epsilon / 4
-        if stopped or calls == cap:
+        if stopped or calls == min(max_rounds, cap):
             fit_index = max((i for i in range(len(models)) if active[i]), key=lambda i: scores[i])
             return dict(seed=seed, epsilon=epsilon, joint_search_calls=calls + 1,
                         confidence_updates=calls, episodes=(truth.horizon - 1) * calls,
