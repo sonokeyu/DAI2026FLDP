@@ -1,0 +1,2 @@
+runs,rounds,nonstopping_rounds,certified_stops,all_certificate_checks_pass,all_charged_progress_checks_pass,training_charged,diagnostic_only_charged,min_training_increment,min_diagnostic_increment,cone_comparisons,max_cone_error,exhaustive_planning_comparisons
+108,513,405,108,True,True,405,0,21.382189964715394,27.66936226836617,8,1.181293729501931e-09,10
